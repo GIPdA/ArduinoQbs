@@ -1,6 +1,6 @@
 import qbs
 
-TeensyApplication {
+ArduinoApplication {
 
     teensy: "31"    // Board Ref: 30, 31, 35, 36, LC
     frequency: "96" // CPU Frequency in MHz
@@ -10,7 +10,7 @@ TeensyApplication {
 
 
     files: [ // List of source files (c, cpp, headers)
-        "TeensyQbs.cpp"
+        "ArduinoQbs.cpp"
     ]
 
     // Other include paths
