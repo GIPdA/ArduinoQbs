@@ -9,20 +9,31 @@ TeensyApplication {
     //keyLayout: "FRENCH"
 
 
-    files: [
+    files: [ // List of source files (c, cpp, headers)
         "TeensyQbs.cpp"
     ]
 
-    //cpp.includePaths: []
-    //cpp.defines: []
+    // Other include paths
+    includePaths: [
+    ]
 
-    //cpp.dynamicLibraries: []
-    //cpp.libraryPaths: []
+    // Teensy/Arduino Core libraries and Project libraries (inside the folder named 'libraries') and External libraries (externalLibrariesPath).
+    // Priorities: Project libs > External libs > Core libs
+    libraries: ["SPI", "EEPROM"] // Examples
 
-    // Optmization: small for size, fast for speed
+    //projectLibrariesPath: "libraries" // To change the default folder name
+    //externalLibrariesPath: "/path/to/custom/lib/folder" // Relative or absolute
+
+    // Optmization: small for size, fast for speed, or none.
     qbs.optimization: "small" // fast, none
 }
 
+
+/* #### Run Configuration ####
+ * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
+ * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
+ * Working directory:       %{CurrentProject:Path}/build
+ */
 
 
 // #### FREQUENCY ####
