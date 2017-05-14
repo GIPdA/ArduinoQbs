@@ -9,7 +9,9 @@ CppApplication {
 
     //project.minimumQbsVersion: "1.6" // Break everything
 
-    property string teensy: "undefined" // Board Ref: 30, 31, 35, 36, LC
+    // Teensy Board Ref: teensy30, 31, 35, 36, LC
+    property string board: "undefined"
+    property string arduinoArch: "undefined"
 
 
     /* #### Run Configuration ####
@@ -93,17 +95,23 @@ CppApplication {
     //cpp.debugInformation: true
     cpp.warningLevel: "all"
 
-    property string boardName: "teensy"+teensy
+    property string boardName: board
+    property string arduinoArchName: arduinoArch
 
     qbsSearchPaths: ["qbs"]
-    Depends { name: "teensyBoard" }
+    Depends { name: "arduinoboard" }
+    Depends { name: "arduinobuild" }
 
-    teensyBoard.boardName: "teensy"+teensy
+
+    property string compilerPath: arduinobuild.compilerPath
+    property string corePath: arduinobuild.corePath
+    property string coreLibrariesPath: arduinobuild.coreLibrariesPath
 
 
-    property string compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
-    property string corePath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
-    property string coreLibrariesPath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries" // Arduino core libs
+//    property string compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
+//    property string corePath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
+//    property string coreLibrariesPath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries" // Arduino core libs
+
     property string projectLibrariesPath: "libraries"   // Project libs
     property string externalLibrariesPath: ""   // Other libs
     property string projectPath: path
@@ -136,68 +144,8 @@ CppApplication {
     }
 
 
-    /*Probe {
-        id: timeProbe
+    property string fcpu: frequency+"000000L"
 
-        property string dst: "0"
-
-        // TODO: check DST?
-
-        configure: {
-            var cmd;
-            var args;
-            if (qbs.targetOS.contains("windows")) {
-                cmd = "cmd";
-                args = ["/c", "date", "/t"]; // TODO
-                found = false;
-                return;
-            } else {
-                cmd = 'date';
-                args = ["+%s"];
-            }
-
-            var p = new Process();
-            if (p.exec(cmd, args) === 0) {
-                found = true;
-                utc = p.readLine();
-                //console.warn("Time UTC: "+utc)
-            } else {
-                found = false;
-            }
-            p.close();
-        }
-    }//*/
-
-
-    property string fcpu: frequency+"000000"
-
-    property stringList flags_common: ["-mthumb", "-ffunction-sections","-fdata-sections","-nostdlib",
-        "-Wcast-align", "-fpack-struct=1" // Default packed struct
-    ]
-    property stringList flags_cpp: ["-MMD","-felide-constructors","-std=gnu++0x"]
-    property stringList flags_c: []
-    property stringList flags_S: ["-x","assembler-with-cpp"]
-
-    property stringList flags_ld: ["-Wl,--gc-sections,--relax,--defsym=__rtc_localtime="+time_local,"--specs=nano.specs"]
-
-    property stringList flags_libs: ["m"]
-
-    property stringList flags_defines: ["ARDUINO=10802", "TEENSYDUINO=141", usbType, "LAYOUT_"+keyLayout, "F_CPU="+fcpu]
-
-
-    cpp.cFlags: flags_c
-    cpp.cxxFlags: flags_cpp
-    cpp.assemblerFlags: flags_S
-
-    cpp.dynamicLibraries: flags_libs
-
-    cpp.commonCompilerFlags: flags_common
-    cpp.linkerFlags: flags_ld
-    cpp.defines: flags_defines
-
-    cpp.positionIndependentCode: false
-    cpp.enableExceptions: false
-    cpp.enableRtti: false
 
     //cpp.cxxLanguageVersion: "c++11"
 
@@ -236,7 +184,7 @@ CppApplication {
             [ // Core
             corePath,
             //corePath+"/avr",
-            corePath+"/util"
+            corePath+"/util",
             ],
             // Core+local Libraries
             librariesIncludePaths)

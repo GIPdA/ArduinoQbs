@@ -2,7 +2,8 @@ import qbs
 
 ArduinoApplication {
 
-    teensy: "31"    // Board Ref: 30, 31, 35, 36, LC
+    board: "teensy31"    // Board Ref: 30, 31, 35, 36, LC
+    arduinoArch: "teensy3"
     frequency: "96" // CPU Frequency in MHz
 
     usbType: "USB_SERIAL" // USB_RAWHID
