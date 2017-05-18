@@ -16,7 +16,12 @@ Things you loose at the moment are the easy board selector, the integrated libra
 
 #### Working yet:
 - Teensy compilation and uploading using genuine Teensy Loader (all Teensy 3.x boards)
-- AVR compilation **but not uploading**
+- AVR compilation **but not uploading** (not yet implemented)
+
+
+### Multiplatform
+
+As of now, paths are hard-coded for macOS, it is on the todo list to support Windows and Linux.
 
 
 ## Requirements
@@ -102,6 +107,7 @@ Happy coding :)
 
 -
 ##### TODO list:
+- Add support for Windows and Linux,
 - Add the option to set the serial port for programming,
 - Add all AVR boards,
 - Qt Creator plugin for project wizard,
