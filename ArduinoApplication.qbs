@@ -130,6 +130,28 @@ CppApplication {
     property string coreLibrariesPath: arduinoPath+arduinobuild.coreLibrariesPath
 
 
+    property bool compilerPathExists: {
+        if (!File.exists(compilerPath)) {
+            console.warn("Arduino path may be wrong (compiler path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+    property bool corePathExists: {
+        if (!File.exists(corePath)) {
+            console.warn("Arduino path may be wrong (core path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+    property bool coreLibrariesPathExists: {
+        if (!File.exists(coreLibrariesPath)) {
+            console.warn("Arduino path may be wrong (core libraries path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+
 
 //    property string compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
 //    property string corePath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
