@@ -5,23 +5,32 @@ import qbs.Process
 import "qbs/js/functions.js" as Helpers
 
 CppApplication {
-    type: ["application", "ihex", "eeprom", "binary", "size"]
-
     //project.minimumQbsVersion: "1.6" // Break everything
 
-    // Teensy Board Ref: teensy30, 31, 35, 36, LC
+    // Teensy board refs: teensy30, 31, 32, 35, 36, LC
+    // AVR board refs: <todo>
     property string board: "undefined"
+    PropertyOptions {
+        name: "board"
+        description: "The Arduino board name to compile for."
+    }
+
     property string arduinoArch: "undefined"
+    PropertyOptions {
+        name: "arduinoArch"
+        allowedValues: ["teensy3", "avr"]
+        description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
+    }
 
 
-    /* #### Run Configuration ####
+    /* #### Run Configuration (Teensy) ####
      * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
      * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
      * Working directory:       %{CurrentProject:Path}/build
      */
 
 
-    /* #### FREQUENCY ####
+    /* #### FREQUENCY (Teensy) ####
     // 2   MHz      31  35  36
     // 4   MHz      31  35  36
     // 8   MHz      31  35  36
@@ -42,7 +51,7 @@ CppApplication {
     property string frequency: "48"     // CPU MHz
 
 
-    /* #### USB ####
+    /* #### USB (Teensy) ####
     // Serial                               USB_SERIAL
     // Keyboard                             USB_KEYBOARDONLY
     // Keyboard + Touch Screen              USB_TOUCHSCREEN
@@ -62,7 +71,7 @@ CppApplication {
     property string usbType: "USB_SERIAL"
 
 
-    /* #### KEYBOARD ####
+    /* #### KEYBOARD (Teensy) ####
     // en-us  US English               US_ENGLISH
     // fr-ca  Canadian French          CANADIAN_FRENCH
     // xx-ca  Canadian Multilingual    CANADIAN_MULTILINGUAL
@@ -98,7 +107,9 @@ CppApplication {
     property string boardName: board
     property string arduinoArchName: arduinoArch
 
+    // If default paths to Arduino install dir doesn't fit, set your own.
     property string customArduinoPath: ""
+
 
     qbsSearchPaths: ["qbs"]
     Depends { name: "arduinoboard" }
@@ -117,7 +128,7 @@ CppApplication {
             return "/Applications/Arduino.app/Contents/Java/"
         }
         if (qbs.hostOS.contains("linux")) {
-            throw "Default Arduino Java folder path is not implemented yet... please set it manually with 'customArduinoPath'."
+            throw "Default Arduino Java folder path for Linux is not implemented yet... please set it manually with 'customArduinoPath'."
             return "~/Arduino/Java/" // Maybe ??
         }
         if (qbs.hostOS.contains("windows")) {
@@ -363,6 +374,8 @@ CppApplication {
 
 
 
+
+    type: ["application", "ihex", "eeprom", "binary", "size"]
 
     cpp.executableSuffix: ".elf"
 
