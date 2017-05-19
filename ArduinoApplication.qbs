@@ -98,14 +98,37 @@ CppApplication {
     property string boardName: board
     property string arduinoArchName: arduinoArch
 
+    property string customArduinoPath: ""
+
     qbsSearchPaths: ["qbs"]
     Depends { name: "arduinoboard" }
     Depends { name: "arduinobuild" }
 
 
-    property string compilerPath: arduinobuild.compilerPath
-    property string corePath: arduinobuild.corePath
-    property string coreLibrariesPath: arduinobuild.coreLibrariesPath
+    // Path to arduino 'Java' folder (the one with the 'hardware' folder in)
+    property string arduinoPath: {
+        // If custom path to Arduino Java folder, use it.
+        if (customArduinoPath != "") {
+            return customArduinoPath
+        }
+
+        // Default paths to Arduino Java folder on main operating systems.
+        if (qbs.hostOS.contains("macos")) {
+            return "/Applications/Arduino.app/Contents/Java/"
+        }
+        if (qbs.hostOS.contains("linux")) {
+            throw "Default Arduino Java folder path is not implemented yet... please set it manually with 'customArduinoPath'."
+            return "~/Arduino/Java/" // Maybe ??
+        }
+        if (qbs.hostOS.contains("windows")) {
+            return "C:/Program Files (x86)/Arduino/Java/"
+        }
+    }
+
+    property string compilerPath: arduinoPath+arduinobuild.compilerPath
+    property string corePath: arduinoPath+arduinobuild.corePath
+    property string coreLibrariesPath: arduinoPath+arduinobuild.coreLibrariesPath
+
 
 
 //    property string compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"

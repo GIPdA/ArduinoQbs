@@ -35,9 +35,10 @@ Module {
         cpp.enableRtti: false
         cpp.cxxLanguageVersion: "gnu++0x"
 
-        compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
-        corePath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
-        coreLibrariesPath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries" // Arduino core libs
+        // Relative paths
+        compilerPath: "hardware/tools"
+        corePath: "hardware/teensy/avr/cores/teensy3"
+        coreLibrariesPath: "hardware/teensy/avr/libraries" // Arduino core libs
     }
 
     Properties {
@@ -68,8 +69,9 @@ Module {
         cpp.enableRtti: false
         cpp.cxxLanguageVersion: "gnu++0x"
 
-        compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
-        corePath: "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino"
-        coreLibrariesPath: "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries" // Arduino core libs
+        // Relative paths
+        compilerPath: "hardware/tools"
+        corePath: "hardware/arduino/avr/cores/arduino"
+        coreLibrariesPath: "hardware/arduino/avr/libraries" // Arduino core libs
     }
 }
