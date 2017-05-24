@@ -8,7 +8,7 @@ Module {
     property string coreLibrariesPath: ""
 
     Properties {
-        condition: arduinoArchName === "teensy3"
+        condition: arduinoBuildSystem === "teensy3"
 
         //cpp.cFlags: outer.concat()
         cpp.cxxFlags: outer.concat(["-MMD","-felide-constructors"])
@@ -42,7 +42,7 @@ Module {
     }
 
     Properties {
-        condition: arduinoArchName === "avr"
+        condition: arduinoBuildSystem === "avr"
 
         cpp.cFlags: outer.concat(["-fno-fat-lto-objects"])
         cpp.cxxFlags: outer.concat(["-fpermissive","-fno-threadsafe-statics","-felide-constructors"])

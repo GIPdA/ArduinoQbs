@@ -105,7 +105,6 @@ CppApplication {
     cpp.warningLevel: "all"
 
     property string boardName: board
-    property string arduinoArchName: arduinoArch
 
     // If default paths to Arduino install dir doesn't fit, set your own.
     property string customArduinoPath: ""
@@ -114,6 +113,10 @@ CppApplication {
     qbsSearchPaths: ["qbs"]
     Depends { name: "arduinoboard" }
     Depends { name: "arduinobuild" }
+
+
+    // Build system to use, used by arduinobuild.
+    property string arduinoBuildSystem: arduinoboard.arduinoBuildSystem
 
 
     // Path to arduino 'Java' folder (the one with the 'hardware' folder in)

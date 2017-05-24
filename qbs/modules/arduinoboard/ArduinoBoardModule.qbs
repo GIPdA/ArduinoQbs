@@ -5,6 +5,8 @@ import qbs.Process
 Module {
     Depends { name: "cpp" }
 
+    property string arduinoBuildSystem: ""
+
     Properties {
         condition: boardName === "teensy30"
 
@@ -20,6 +22,8 @@ Module {
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
+
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -37,6 +41,8 @@ Module {
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
+
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -53,6 +59,8 @@ Module {
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
+
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -69,6 +77,8 @@ Module {
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
+
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -89,6 +99,8 @@ Module {
         cpp.defines: outer.concat(flags_defines)
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
+
+        arduinoBuildSystem: "avr"
     }
 
     Properties {
@@ -109,5 +121,7 @@ Module {
         cpp.defines: outer.concat(flags_defines)
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
+
+        arduinoBuildSystem: "avr"
     }
 }
