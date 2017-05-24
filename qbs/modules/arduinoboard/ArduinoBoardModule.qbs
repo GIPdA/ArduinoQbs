@@ -10,7 +10,7 @@ Module {
 
     Properties {
         condition: boardName === "teensy30"
-        cpu: "cpu: "mk20dx256""
+        cpu: "mk20dx128"
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant"]
         property stringList flags_defines: ["__MK20DX128__"]
