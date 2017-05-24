@@ -14,18 +14,18 @@ void setup()
 
 void loop()
 {
-    digitalWriteFast(13, HIGH);
+    digitalWrite(13, HIGH);
     delay(500);
-    digitalWriteFast(13, LOW);
+    digitalWrite(13, LOW);
     delay(500);
 
     Serial.println("Test7!");
 
     if (Serial.available()) {
         Serial.read();
-        digitalWriteFast(13, HIGH);
+        digitalWrite(13, HIGH);
         delay(500);
-        digitalWriteFast(13, LOW);
+        digitalWrite(13, LOW);
         delay(500);
     }
 }
