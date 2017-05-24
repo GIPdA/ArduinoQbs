@@ -16,12 +16,14 @@ Things you loose at the moment are the easy board selector, the integrated libra
 
 #### Working yet:
 - Teensy compilation and uploading using genuine Teensy Loader (all Teensy 3.x boards)
-- AVR compilation **but not uploading** (not yet implemented)
+- AVR compilation and uploading (only pro mini supported yet, other boards will come)
 
 
 ### Multiplatform
 
-As of now, paths are hard-coded for macOS, it is on the todo list to support Windows and Linux.
+Compilation and upload should work on all Arduino-supported platforms, but only macOS has been tested yet (defaults paths to Arduino resources on other platforms than macOS are still to be validated).
+
+**Upload may not work under Windows due to the current use of scripts, this is on the todo list.**
 
 
 ## Requirements
@@ -75,8 +77,7 @@ Open what was ```ArduinoQbs.qbs``` in Qt Creator to add the project to your curr
 
 - the list of source files: ```files```
 - the board name: ```board```
-- the architecture used (```arduinoArch```): ```teensy3``` or ```avr```
-- the frequency used: ```frequency```
+- the frequency used (if needed, mainly for Teensy): ```frequency```
 
 
 #### 3. Select the appropriate Kit
@@ -86,18 +87,9 @@ In the Projects Tab (on the left), Build & Run, add the toolchain for your proje
 
 #### 4. Edit Run configuration
 
-##### For Teensy:
-As specified in the QBS project file:
-> Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
+Add a custom executable configuration and set the fields as specified in ArduinoQbs.qbs file under the "Run Configuration" comment.
 
-> Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
-
-> Working directory:       %{CurrentProject:Path}/build
-
-With that you will be able to hit "Run" to upload your code to your Teensy.
-
-##### For AVR:
-> TODO
+With that you will be able to hit "Run" to upload your code, using avrdude for AVR boards and Teensy Loader for Teensy boards.
 
 
 #### 5. Build and upload!
@@ -107,8 +99,6 @@ Happy coding :)
 
 -
 ##### TODO list:
-- Add support for Windows and Linux,
-- Add the option to set the serial port for programming,
 - Add all AVR boards,
 - Qt Creator plugin for project wizard,
 - Qt Creator plugin for missing features (board selector, serial console)

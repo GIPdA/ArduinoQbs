@@ -1,6 +1,7 @@
 import qbs
 import qbs.FileInfo
 import qbs.File
+import qbs.TextFile
 import qbs.Process
 import "qbs/js/functions.js" as Helpers
 
@@ -24,8 +25,14 @@ CppApplication {
 
 
     /* #### Run Configuration (Teensy) ####
-     * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
-     * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
+     * Executable:              /usr/bin/env
+     * Command line arguments:  %{CurrentProject:Path}/build/teensyupload %{CurrentProject:FileBaseName} %{CurrentProject:Path}
+     * Working directory:       %{CurrentProject:Path}/build
+     */
+
+    /* #### Run Configuration (AVR, macOS & Unix) ####
+     * Executable:              /usr/bin/env
+     * Command line arguments:  %{CurrentProject:Path}/build/avrupload %{CurrentProject:FileBaseName}
      * Working directory:       %{CurrentProject:Path}/build
      */
 
@@ -105,6 +112,7 @@ CppApplication {
     cpp.warningLevel: "all"
 
     property string boardName: board
+    property string serialport: "" // 'auto' to look for a fit?
 
     // If default paths to Arduino install dir doesn't fit, set your own.
     property string customArduinoPath: ""
@@ -363,9 +371,59 @@ CppApplication {
 
             //console.warn("Core libs: " + coreLibs);
         }
-    }//*/
+    }
 
 
+    // Write script to upload hex file to the avr board
+    Probe {
+        id: avrUploadProbe
+        condition: arduinoBuildSystem === "avr"
+
+        configure: {
+            // Setup command
+            var avrdude = compilerPath + "/avr/bin/avrdude"
+            var config = compilerPath + "/avr/etc/avrdude.conf"
+
+            var cmd = [avrdude, "-C"+config,
+                       "-v",
+                       "-p"+arduinoboard.cpu,
+                       "-carduino",
+                       "-P"+serialport, "-b57600",
+                       "-D",
+                       "-Uflash:w:$1.hex:i"
+                    ]
+
+            // Write script
+            var f = TextFile(projectPath + "/build/avrupload", TextFile.WriteOnly)
+            f.writeLine(cmd.join(' '))
+            f.close();
+
+            found = true
+        }
+    }
+
+    // Write script to upload hex file to teensy
+    Probe {
+        id: teensyUploadProbe
+        condition: arduinoBuildSystem === "teensy3"
+
+        configure: {
+            // Read template file
+            var tpl = TextFile(projectPath + "/qbs/tools/teensy_load.tpl", TextFile.ReadOnly)
+            var tplStr = tpl.readAll()
+            tpl.close()
+
+            // Replace tags
+            tplStr = tplStr.replace(/\[TEENSY_TOOLS_PATH\]/gi, compilerPath)
+
+            // Write script
+            var f = TextFile(projectPath + "/build/teensyupload", TextFile.WriteOnly)
+            f.write(tplStr)
+            f.close();
+
+            found = true
+        }
+    }
 
 
     type: ["application", "ihex", "eeprom", "binary", "size"]

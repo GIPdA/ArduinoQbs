@@ -3,8 +3,9 @@ import qbs
 ArduinoApplication {
 
     board: "teensy31"    // Board Ref: 30, 31, 35, 36, LC
-    arduinoArch: "teensy3"
     frequency: "96" // CPU Frequency in MHz
+
+    serialport: "/dev/cu.usbmodem1411"
 
     usbType: "USB_SERIAL" // USB_RAWHID
     //keyLayout: "FRENCH"
@@ -31,8 +32,14 @@ ArduinoApplication {
 
 
 /* #### Run Configuration (Teensy) ####
- * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
- * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
+ * Executable:              /usr/bin/env
+ * Command line arguments:  %{CurrentProject:Path}/build/teensyupload %{CurrentProject:FileBaseName} %{CurrentProject:Path}
+ * Working directory:       %{CurrentProject:Path}/build
+ */
+
+/* #### Run Configuration (AVR, macOS & Unix) ####
+ * Executable:              /usr/bin/env
+ * Command line arguments:  %{CurrentProject:Path}/build/avrupload %{CurrentProject:FileBaseName}
  * Working directory:       %{CurrentProject:Path}/build
  */
 

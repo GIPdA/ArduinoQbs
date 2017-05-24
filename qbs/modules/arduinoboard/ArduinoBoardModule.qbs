@@ -5,10 +5,12 @@ import qbs.Process
 Module {
     Depends { name: "cpp" }
 
+    property string cpu: ""
     property string arduinoBuildSystem: ""
 
     Properties {
         condition: boardName === "teensy30"
+        cpu: "cpu: "mk20dx256""
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant"]
         property stringList flags_defines: ["__MK20DX128__"]
@@ -28,6 +30,7 @@ Module {
 
     Properties {
         condition: boardName === "teensy31"
+        cpu: "mk20dx256"
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant"]
         property stringList flags_defines: ["__MK20DX256__"]
@@ -47,6 +50,7 @@ Module {
 
     Properties {
         condition: boardName === "teensy35"
+        cpu: "mk64fx512"
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16"]
         property stringList flags_defines: ["__MK64FX512__"]
@@ -65,6 +69,7 @@ Module {
 
     Properties {
         condition: boardName === "teensy36"
+        cpu: "mk66fx1m0"
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16"]
         property stringList flags_defines: ["__MK66FX1M0__"]
@@ -83,6 +88,7 @@ Module {
 
     Properties {
         condition: boardName === "pro5Vatmega328" // Arduino Pro or Pro Mini 5V, 16MHz, ATmega328p
+        cpu: "atmega328p"
 
         property stringList flags_cpu: ["-mmcu=atmega328p"]
         property stringList flags_defines: ["AVR_PRO"]
@@ -105,6 +111,7 @@ Module {
 
     Properties {
         condition: boardName === "pro3V3atmega328" // Arduino Pro or Pro Mini 3.3V, 16MHz, ATmega328p
+        cpu: "atmega328p"
 
         property stringList flags_cpu: ["-mmcu=atmega328p"]
         property stringList flags_defines: ["AVR_PRO", "ARDUINO_AVR_PRO", "ARDUINO_ARCH_AVR"]
