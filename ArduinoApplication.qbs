@@ -5,23 +5,32 @@ import qbs.Process
 import "qbs/js/functions.js" as Helpers
 
 CppApplication {
-    type: ["application", "ihex", "eeprom", "binary", "size"]
-
     //project.minimumQbsVersion: "1.6" // Break everything
 
-    // Teensy Board Ref: teensy30, 31, 35, 36, LC
+    // Teensy board refs: teensy30, 31, 32, 35, 36, LC
+    // AVR board refs: <todo>
     property string board: "undefined"
+    PropertyOptions {
+        name: "board"
+        description: "The Arduino board name to compile for."
+    }
+
     property string arduinoArch: "undefined"
+    PropertyOptions {
+        name: "arduinoArch"
+        allowedValues: ["teensy3", "avr"]
+        description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
+    }
 
 
-    /* #### Run Configuration ####
+    /* #### Run Configuration (Teensy) ####
      * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
      * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
      * Working directory:       %{CurrentProject:Path}/build
      */
 
 
-    /* #### FREQUENCY ####
+    /* #### FREQUENCY (Teensy) ####
     // 2   MHz      31  35  36
     // 4   MHz      31  35  36
     // 8   MHz      31  35  36
@@ -42,7 +51,7 @@ CppApplication {
     property string frequency: "48"     // CPU MHz
 
 
-    /* #### USB ####
+    /* #### USB (Teensy) ####
     // Serial                               USB_SERIAL
     // Keyboard                             USB_KEYBOARDONLY
     // Keyboard + Touch Screen              USB_TOUCHSCREEN
@@ -62,7 +71,7 @@ CppApplication {
     property string usbType: "USB_SERIAL"
 
 
-    /* #### KEYBOARD ####
+    /* #### KEYBOARD (Teensy) ####
     // en-us  US English               US_ENGLISH
     // fr-ca  Canadian French          CANADIAN_FRENCH
     // xx-ca  Canadian Multilingual    CANADIAN_MULTILINGUAL
@@ -98,25 +107,69 @@ CppApplication {
     property string boardName: board
     property string arduinoArchName: arduinoArch
 
+    // If default paths to Arduino install dir doesn't fit, set your own.
+    property string customArduinoPath: ""
+
+
     qbsSearchPaths: ["qbs"]
     Depends { name: "arduinoboard" }
     Depends { name: "arduinobuild" }
 
 
-    property string compilerPath: arduinobuild.compilerPath
-    property string corePath: arduinobuild.corePath
-    property string coreLibrariesPath: arduinobuild.coreLibrariesPath
+    // Path to arduino 'Java' folder (the one with the 'hardware' folder in)
+    property string arduinoPath: {
+        // If custom path to Arduino Java folder, use it.
+        if (customArduinoPath != "") {
+            return customArduinoPath
+        }
+
+        // Default paths to Arduino Java folder on main operating systems.
+        if (qbs.hostOS.contains("macos")) {
+            return "/Applications/Arduino.app/Contents/Java/"
+        }
+        if (qbs.hostOS.contains("linux")) {
+            throw "Default Arduino Java folder path for Linux is not implemented yet... please set it manually with 'customArduinoPath'."
+            return "~/Arduino/Java/" // Maybe ??
+        }
+        if (qbs.hostOS.contains("windows")) {
+            return "C:/Program Files (x86)/Arduino/Java/"
+        }
+    }
+
+    property string compilerPath: arduinoPath+arduinobuild.compilerPath
+    property string corePath: arduinoPath+arduinobuild.corePath
+    property string coreLibrariesPath: arduinoPath+arduinobuild.coreLibrariesPath
 
 
-//    property string compilerPath: "/Applications/Arduino.app/Contents/Java/hardware/tools"
-//    property string corePath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
-//    property string coreLibrariesPath: "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries" // Arduino core libs
+    // Warn for invalid paths
+    property bool compilerPathExists: {
+        if (!File.exists(compilerPath)) {
+            console.warn("Arduino path may be wrong (compiler path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+    property bool corePathExists: {
+        if (!File.exists(corePath)) {
+            console.warn("Arduino path may be wrong (core path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+    property bool coreLibrariesPathExists: {
+        if (!File.exists(coreLibrariesPath)) {
+            console.warn("Arduino path may be wrong (core libraries path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            return false
+        }
+        return true
+    }
+
 
     property string projectLibrariesPath: "libraries"   // Project libs
     property string externalLibrariesPath: ""   // Other libs
     property string projectPath: path
 
-    // Libs: Project libs > External libs > Core libs
+    // Libs priority: Project libs > External libs > Core libs
 
     property string externalLibrariesPath_abs: FileInfo.isAbsolutePath(externalLibrariesPath) ? externalLibrariesPath : projectPath+"/"+externalLibrariesPath
 
@@ -226,7 +279,7 @@ CppApplication {
             }
             return l
         }
-        prefix: coreLibrariesPath+"/" // From Arduino App
+        prefix: coreLibrariesPath + "/" // From Arduino App
         cpp.warningLevel: "none"
     }
 
@@ -254,15 +307,8 @@ CppApplication {
 
             return l
         }
-        prefix: projectLibrariesPath+"/"
+        prefix: projectLibrariesPath + "/"
     }
-
-    /*Group {
-        name: "Local Libraries"
-        files: ["*.c", "*.cpp", "src/ *.c", "src/ *.cpp", "*.h", "src/ *.h", "*.hpp", "src/ *.hpp"]
-        prefix: localLibrariesPath + "/ * /"
-        //cpp.warningLevel: "none"
-    }//*/
 
 
     // External libraries
@@ -290,7 +336,7 @@ CppApplication {
             }
             return l
         }
-        prefix: externalLibrariesPath_abs+"/"
+        prefix: externalLibrariesPath_abs + "/"
     }
 
 
@@ -318,6 +364,8 @@ CppApplication {
 
 
 
+
+    type: ["application", "ihex", "eeprom", "binary", "size"]
 
     cpp.executableSuffix: ".elf"
 

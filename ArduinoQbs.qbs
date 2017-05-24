@@ -30,14 +30,14 @@ ArduinoApplication {
 }
 
 
-/* #### Run Configuration ####
+/* #### Run Configuration (Teensy) ####
  * Executable:              %{CurrentProject:Path}/qbs/tools/teensy_load
  * Command line arguments:  %{CurrentProject:FileBaseName} %{CurrentProject:Path}
  * Working directory:       %{CurrentProject:Path}/build
  */
 
 
-// #### FREQUENCY ####
+// #### FREQUENCY (Teensy) ####
 // 2   MHz      31  35  36
 // 4   MHz      31  35  36
 // 8   MHz      31  35  36
@@ -56,7 +56,7 @@ ArduinoApplication {
 // Note: o = overclock
 
 
-// #### USB ####
+// #### USB (Teensy) ####
 // Serial                               USB_SERIAL
 // Keyboard                             USB_KEYBOARDONLY
 // Keyboard + Touch Screen              USB_TOUCHSCREEN
@@ -74,7 +74,7 @@ ArduinoApplication {
 // No USB                               USB_DISABLED
 
 
-// #### KEYBOARD ####
+// #### KEYBOARD (Teensy) ####
 // en-us  US English               US_ENGLISH
 // fr-ca  Canadian French          CANADIAN_FRENCH
 // xx-ca  Canadian Multilingual    CANADIAN_MULTILINGUAL
