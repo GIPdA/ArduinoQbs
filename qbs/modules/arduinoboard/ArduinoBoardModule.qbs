@@ -29,7 +29,7 @@ Module {
     }
 
     Properties {
-        condition: boardName === "teensy31"
+        condition: boardName === "teensy31" || boardName === "teensy32"
         cpu: "mk20dx256"
 
         property stringList flags_cpu: ["-mcpu=cortex-m4","-fsingle-precision-constant"]
