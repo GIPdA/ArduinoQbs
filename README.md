@@ -99,6 +99,7 @@ Happy coding :)
 
 -
 ##### TODO list:
+- Test under Windows and Linux,
 - Add all AVR boards,
 - Qt Creator plugin for project wizard,
 - Qt Creator plugin for missing features (board selector, serial console)
