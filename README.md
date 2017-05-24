@@ -46,15 +46,15 @@ Then add custom GCC compilers (C then C++) from the Arduino package/install fold
 - For the Teensy 3:
 
 ```
->C: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-gcc
->C++: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-g++
+C: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-gcc
+C++: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-g++
 ```
 
 - For AVR:
 
 ```
->C: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-gcc
->C++: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-g++
+C: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-gcc
+C++: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-g++
 ```
 
 #### 2. Add new Kits:
