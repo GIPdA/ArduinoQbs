@@ -45,15 +45,17 @@ Then add custom GCC compilers (C then C++) from the Arduino package/install fold
 
 - For the Teensy 3:
 
->C: < Path to Arduino App >/Java/hardware/tools/arm/bin/arm-none-eabi-gcc
+```
+>C: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-gcc
+>C++: <Path to Arduino App>/Java/hardware/tools/arm/bin/arm-none-eabi-g++
+```
 
->C++: < Path to Arduino App >/Java/hardware/tools/arm/bin/arm-none-eabi-g++
-	
 - For AVR:
 
->C: < Path to Arduino App >/Java/hardware/tools/avr/bin/avr-gcc
-
->C++: < Path to Arduino App >/Java/hardware/tools/avr/bin/avr-g++
+```
+>C: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-gcc
+>C++: <Path to Arduino App>/Java/hardware/tools/avr/bin/avr-g++
+```
 
 #### 2. Add new Kits:
 - Name: AVR or Teensy,
@@ -87,7 +89,7 @@ In the Projects Tab (on the left), Build & Run, add the toolchain for your proje
 
 #### 4. Edit Run configuration
 
-Add a custom executable configuration and set the fields as specified in ArduinoQbs.qbs file under the "Run Configuration" comment.
+Add a custom executable configuration and set the fields as specified in ```ArduinoQbs.qbs``` file under the "Run Configuration" comment.
 
 With that you will be able to hit "Run" to upload your code, using avrdude for AVR boards and Teensy Loader for Teensy boards.
 
@@ -97,7 +99,7 @@ Happy coding :)
 
 
 
--
+--
 ##### TODO list:
 - Test under Windows and Linux,
 - Add all AVR boards,
