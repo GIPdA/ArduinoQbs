@@ -213,7 +213,7 @@ CppApplication {
 
     //cpp.cxxLanguageVersion: "c++11"
 
-    property stringList includePaths: []
+    property pathList includePaths: []
 
     // Core libs and local libs.
     // Source files and include paths will be built from that.
