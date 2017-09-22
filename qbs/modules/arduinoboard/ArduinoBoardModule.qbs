@@ -22,7 +22,7 @@ Module {
 
         //cpp.libraryPaths:
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         arduinoBuildSystem: "teensy3"
@@ -42,7 +42,7 @@ Module {
 
         //cpp.libraryPaths:
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         arduinoBuildSystem: "teensy3"
@@ -61,7 +61,7 @@ Module {
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         arduinoBuildSystem: "teensy3"
@@ -80,7 +80,7 @@ Module {
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         arduinoBuildSystem: "teensy3"
@@ -101,7 +101,7 @@ Module {
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
@@ -124,7 +124,7 @@ Module {
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
-        cpp.linkerFlags: outer.concat(flags_cpu, flags_ldspecs)
+        cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])

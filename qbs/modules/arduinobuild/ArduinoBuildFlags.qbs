@@ -22,7 +22,7 @@ Module {
             ]
         )
 
-        cpp.linkerFlags: outer.concat(
+        cpp.driverFlags: outer.concat(
             ["-Wl,--gc-sections,--relax,--defsym=__rtc_localtime="+time_local,"--specs=nano.specs"]
         )
 
@@ -56,7 +56,7 @@ Module {
             ]
         )
 
-        cpp.linkerFlags: outer.concat(
+        cpp.driverFlags: outer.concat(
             ["-fuse-linker-plugin"]
         )
 
