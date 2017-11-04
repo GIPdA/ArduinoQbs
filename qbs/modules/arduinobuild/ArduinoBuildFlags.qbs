@@ -11,6 +11,8 @@ Module {
     Properties {
         condition: arduinoBuildSystem === "teensy3"
 
+        //TODO: check compiler and throw error if not compatible
+
         cpp.architecture: "armv4t"
         //cpp.cFlags: outer.concat()
         cpp.cxxFlags: outer.concat(["-MMD","-felide-constructors"])
@@ -46,6 +48,8 @@ Module {
 
     Properties {
         condition: arduinoBuildSystem === "avr"
+
+        //TODO: check compiler and throw error if not compatible
 
         cpp.architecture: "avr"
         cpp.cFlags: outer.concat(["-fno-fat-lto-objects"])
