@@ -6,7 +6,7 @@ import qbs.Process
 import "qbs/js/functions.js" as Helpers
 
 CppApplication {
-    //project.minimumQbsVersion: "1.6" // Break everything
+    id: rootApp
 
     // Teensy board refs: teensy30, 31, 32, 35, 36, LC
     // AVR board refs: <todo>
@@ -22,7 +22,6 @@ CppApplication {
         allowedValues: ["teensy3", "avr"]
         description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
     }
-
 
     /* #### Run Configuration (Teensy) ####
      * Executable:              /usr/bin/env
@@ -108,6 +107,8 @@ CppApplication {
     property string keyLayout: "FRENCH"
 
 
+
+
     //cpp.debugInformation: true
     cpp.warningLevel: "all"
 
@@ -118,7 +119,7 @@ CppApplication {
     property string customArduinoPath: ""
 
 
-    qbsSearchPaths: ["qbs"]
+    qbsSearchPaths: "qbs"
     Depends { name: "arduinoboard" }
     Depends { name: "arduinobuild" }
 
@@ -151,6 +152,14 @@ CppApplication {
     property string corePath: arduinoPath+arduinobuild.corePath
     property string coreLibrariesPath: arduinoPath+arduinobuild.coreLibrariesPath
 
+    property pathList coreIncludePaths: {
+        var l = []
+        for (var i = 0; i < arduinobuild.coreIncludePaths.length; i++) {
+            l = l.concat(arduinoPath+arduinobuild.coreIncludePaths[i])
+        }
+        return l
+    }
+
 
     // Warn for invalid paths
     property bool compilerPathExists: {
@@ -175,7 +184,6 @@ CppApplication {
         return true
     }
 
-
     property string projectLibrariesPath: "libraries"   // Project libs
     property string externalLibrariesPath: ""   // Other libs
     property string projectPath: path
@@ -184,6 +192,17 @@ CppApplication {
 
     property string externalLibrariesPath_abs: FileInfo.isAbsolutePath(externalLibrariesPath) ? externalLibrariesPath : projectPath+"/"+externalLibrariesPath
 
+
+    /*Probe {
+        id: testprobe
+        condition: true
+
+        configure: {
+
+            console.warn("libs: " + librariesIncludePaths);
+            console.warn("core path:" + corePath);
+        }
+    }//*/
 
 
     // Time
@@ -219,17 +238,17 @@ CppApplication {
     // Source files and include paths will be built from that.
     property stringList libraries: []
 
-
     property pathList librariesIncludePaths: {
         var l = []
         for (var i = 0; i < libraries.length; i++) {
-            if (Helpers.isProjectLibrary(libraries[i])) {
+            // Include root lib and lib/src as some libs put their sources in "src" subdir
+            if (Helpers.isProjectLibrary(libraries[i], rootApp)) {
                 l = l.concat(projectLibrariesPath+"/"+libraries[i])
                 l = l.concat(projectLibrariesPath+"/"+libraries[i]+"/src")
-            } else if (Helpers.isExternalLibrary(libraries[i])) {
+            } else if (Helpers.isExternalLibrary(libraries[i], rootApp)) {
                 l = l.concat(externalLibrariesPath_abs+"/"+libraries[i])
                 l = l.concat(externalLibrariesPath_abs+"/"+libraries[i]+"/src")
-            } else if (Helpers.isCoreLibrary(libraries[i])) {
+            } else if (Helpers.isCoreLibrary(libraries[i], rootApp)) {
                 l = l.concat(coreLibrariesPath+"/"+libraries[i])
                 l = l.concat(coreLibrariesPath+"/"+libraries[i]+"/src")
             }
@@ -238,20 +257,18 @@ CppApplication {
     }
 
 
-
-
-
     // All includes
     cpp.includePaths: {
         var l = []
         return l.concat(
-            [ // Core
+            // Core
             corePath,
-            //corePath+"/avr",
-            corePath+"/util",
-            ],
+            coreIncludePaths,
             // Core+local Libraries
-            librariesIncludePaths)
+            librariesIncludePaths,
+            // Project include path
+            includePaths
+            )
     }
 
 
@@ -267,14 +284,15 @@ CppApplication {
 
     // Core libraries
     Group {
+        condition: true
         name: "Core Libraries files"
         files: {
             var l = []
             for (var i = 0; i < libraries.length; i++) {
                 // If not in 'project' or 'external' libs
-                if (Helpers.isCoreLibrary(libraries[i]) &&
-                    !Helpers.isProjectLibrary(libraries[i]) &&
-                    !Helpers.isExternalLibrary(libraries[i]) ) {
+                if (Helpers.isCoreLibrary(libraries[i], rootApp) &&
+                    !Helpers.isProjectLibrary(libraries[i], rootApp) &&
+                    !Helpers.isExternalLibrary(libraries[i], rootApp) ) {
                     l = l.concat(libraries[i]+"/*.cpp")
                     l = l.concat(libraries[i]+"/*.c")
                     l = l.concat(libraries[i]+"/*.h")
@@ -301,7 +319,7 @@ CppApplication {
         files: {
             var l = []
             for (var i = 0; i < libraries.length; i++) {
-                if (Helpers.isProjectLibrary(libraries[i])) {
+                if (Helpers.isProjectLibrary(libraries[i], rootApp)) {
                     l = l.concat(libraries[i]+"/*.cpp")
                     l = l.concat(libraries[i]+"/*.c")
                     l = l.concat(libraries[i]+"/*.h")
@@ -330,8 +348,8 @@ CppApplication {
             var l = []
             for (var i = 0; i < libraries.length; i++) {
                 // If not in 'project' libs
-                if (Helpers.isExternalLibrary(libraries[i]) &&
-                    !Helpers.isProjectLibrary(libraries[i]) ) {
+                if (Helpers.isExternalLibrary(libraries[i], rootApp) &&
+                    !Helpers.isProjectLibrary(libraries[i], rootApp) ) {
                     l = l.concat(libraries[i]+"/*.cpp")
                     l = l.concat(libraries[i]+"/*.c")
                     l = l.concat(libraries[i]+"/*.h")
@@ -351,18 +369,38 @@ CppApplication {
     }
 
 
+    // Raise error if a lib is not found anywhere
+    property bool unkownLibraryFound: {
+        for (var i = 0; i < libraries.length; i++) {
+            if (!Helpers.isCoreLibrary(libraries[i], rootApp) &&
+                !Helpers.isProjectLibrary(libraries[i], rootApp) &&
+                !Helpers.isExternalLibrary(libraries[i], rootApp) ) {
+
+                //console.error("Library not found: " + libraries[i])
+                throw ("Library not found: " + libraries[i])
+                return true
+            }
+        }
+        return false
+    }
+
+
+
+
     // Build core libraries names
+    property stringList availableCoreLibraries: coreLibsProbe.coreLibrariesEntries
+
     Probe {
         id: coreLibsProbe
         condition: true
 
-        property stringList availableCoreLibraries: []
+        property stringList coreLibrariesEntries: []
 
         configure: {
             // Get core libs names
-            var coreLibs = File.directoryEntries(coreLibrariesPath, File.AllDirs)
+            var coreLibs = File.directoryEntries(coreLibrariesPath, File.AllDirs | File.NoDotAndDotDot)
 
-            availableCoreLibraries = coreLibs
+            coreLibrariesEntries = coreLibs
 
             if (coreLibs.count > 0)
                 found = true
@@ -375,11 +413,12 @@ CppApplication {
 
 
     // Write script to upload hex file to the avr board
-    Probe {
+    // TODO: don't use probe
+    /*Probe {
         id: avrUploadProbe
         condition: arduinoBuildSystem === "avr"
 
-        configure: {
+        configure: { // TODO: use template
             // Setup command
             var avrdude = compilerPath + "/avr/bin/avrdude"
             var config = compilerPath + "/avr/etc/avrdude.conf"
@@ -397,12 +436,14 @@ CppApplication {
             var f = TextFile(projectPath + "/build/avrupload", TextFile.WriteOnly)
             f.writeLine(cmd.join(' '))
             f.close();
+            // TODO: chmod u+x
 
             found = true
         }
     }
 
     // Write script to upload hex file to teensy
+    // TODO: don't use probe
     Probe {
         id: teensyUploadProbe
         condition: arduinoBuildSystem === "teensy3"
@@ -420,24 +461,60 @@ CppApplication {
             var f = TextFile(projectPath + "/build/teensyupload", TextFile.WriteOnly)
             f.write(tplStr)
             f.close();
+            // TODO: chmod u+x
 
             found = true
+        }
+    }//*/
+
+
+    Rule {
+        inputs: ["ihex"]
+
+        Artifact {
+            fileTags: ["upload"]
+            filePath: product.destinationDirectory + "/" + "upload.sh"
+        }
+
+        prepare: {
+            var cmd = new JavaScriptCommand();
+            cmd.description = "Upload: " + FileInfo.fileName(input.filePath)
+            //cmd.silent = true;
+            cmd.sourceCode = function() {
+                // Read template file
+                var tpl = TextFile(product.projectPath + "/qbs/tools/teensy_load.tpl", TextFile.ReadOnly)
+                var tplStr = tpl.readAll()
+                tpl.close()
+
+                // Replace tags
+                tplStr = tplStr.replace(/\[TEENSY_TOOLS_PATH\]/gi, product.compilerPath)
+
+                //console.warn(tplStr)
+
+                // Write script
+                var f = TextFile(output.filePath, TextFile.WriteOnly)
+                f.write(tplStr)
+                f.close();
+                // TODO: chmod u+x
+            };
+            return [cmd];
         }
     }
 
 
-    type: ["application", "ihex", "eeprom", "binary", "size"]
+    type: ["application", "ihex", "eeprom", "binary", "size", "upload"]
 
     cpp.executableSuffix: ".elf"
 
 
     // Install hex to build dir for upload (need to check "Install" in Project Build Settings)
-    qbs.installRoot: path
+    //qbs.installRoot: path
+    // TODO: installRoot cannot be modified by code, find an alternative
     Group {
         name: "Hex - Teensy Loader"
-        fileTagsFilter: ["application", "ihex"]
+        fileTagsFilter: ["application", "ihex", "upload"]
         qbs.install: true
-        qbs.installDir: "build"
+        //qbs.installDir: "build"
     }//*/
 
 
@@ -482,7 +559,7 @@ CppApplication {
             cmd.highlight = "filegen";
             return cmd;
         }
-    }//*/
+    }
 
 
     Rule {
@@ -501,7 +578,7 @@ CppApplication {
             cmd.highlight = "filegen";
             return cmd;
         }
-    }//*/
+    }
 
 
     Rule {
@@ -538,7 +615,7 @@ CppApplication {
                 console.warn(">>" + process.readStdOut());
                 process.close();
             };
-            return [cmd];//*/
+            return [cmd];
         }
     }
 }

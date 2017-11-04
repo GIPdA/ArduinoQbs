@@ -1,5 +1,5 @@
 
-var File = loadExtension("qbs.File");
+var File = require("qbs.File");
 
 
 function getTimes()
@@ -19,15 +19,15 @@ function getTimes()
 
 
 // Lib helpers
-function isCoreLibrary(libName)
+function isCoreLibrary(libName, rootApp)
 {
-    return coreLibsProbe.availableCoreLibraries.contains(libName)
+    return rootApp.availableCoreLibraries.contains(libName)
 }
-function isProjectLibrary(libName)
+function isProjectLibrary(libName, rootApp)
 {
-    return File.exists(projectPath+"/"+projectLibrariesPath+"/"+libName)
+    return File.exists(rootApp.projectPath+"/"+rootApp.projectLibrariesPath+"/"+libName)
 }
-function isExternalLibrary(libName)
+function isExternalLibrary(libName, rootApp)
 {
-    return File.exists(externalLibrariesPath_abs+"/"+libName)
+    return File.exists(rootApp.externalLibrariesPath_abs+"/"+libName)
 }

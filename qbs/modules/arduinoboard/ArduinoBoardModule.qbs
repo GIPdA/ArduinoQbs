@@ -3,6 +3,8 @@ import qbs.FileInfo
 import qbs.Process
 
 Module {
+    id: boardModuleRoot
+    condition: true
     Depends { name: "cpp" }
 
     property string cpu: ""
@@ -25,7 +27,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        arduinoBuildSystem: "teensy3"
+        boardModuleRoot.arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -45,7 +47,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        arduinoBuildSystem: "teensy3"
+        boardModuleRoot.arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -64,7 +66,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        arduinoBuildSystem: "teensy3"
+        boardModuleRoot.arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -83,7 +85,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        arduinoBuildSystem: "teensy3"
+        boardModuleRoot.arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -106,7 +108,7 @@ Module {
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
 
-        arduinoBuildSystem: "avr"
+        boardModuleRoot.arduinoBuildSystem: "avr"
     }
 
     Properties {
@@ -129,6 +131,6 @@ Module {
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
 
-        arduinoBuildSystem: "avr"
+        boardModuleRoot.arduinoBuildSystem: "avr"
     }
 }

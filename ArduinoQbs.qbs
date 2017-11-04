@@ -2,8 +2,10 @@ import qbs
 
 ArduinoApplication {
 
-    board: "teensy31"    // Board Ref: 30, 31, 35, 36, LC
-    frequency: "96" // CPU Frequency in MHz
+    board: "teensy30"    // Board Ref: 30, 31, 35, 36, LC
+    frequency: "48" // CPU Frequency in MHz
+
+    //board: "pro3V3atmega328"
 
     serialport: "/dev/cu.usbmodem1411"
 
@@ -16,12 +18,12 @@ ArduinoApplication {
     ]
 
     // Other include paths
-    includePaths: [
-    ]
+    includePaths: []
 
     // Teensy/Arduino Core libraries and Project libraries (inside the folder named 'libraries') and External libraries (externalLibrariesPath).
     // Priorities: Project libs > External libs > Core libs
     libraries: ["SPI", "EEPROM"] // Examples
+
 
     //projectLibrariesPath: "libraries" // To change the default folder name
     //externalLibrariesPath: "/path/to/custom/lib/folder" // Relative or absolute

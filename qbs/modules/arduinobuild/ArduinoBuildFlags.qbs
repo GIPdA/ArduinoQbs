@@ -1,14 +1,18 @@
 import qbs
 
 Module {
+    id: buildSystemRoot
+    condition: true
     Depends { name: "cpp" }
 
     property string compilerPath: ""
     property string corePath: ""
     property string coreLibrariesPath: ""
+    property string arduinoBuildSystem: "teensy3"
+    property pathList coreIncludePaths: []
 
     Properties {
-        condition: arduinoBuildSystem === "teensy3"
+        condition: buildSystemRoot.arduinoBuildSystem === "teensy3"
 
         //cpp.cFlags: outer.concat()
         cpp.cxxFlags: outer.concat(["-MMD","-felide-constructors"])
@@ -39,10 +43,11 @@ Module {
         compilerPath: "hardware/tools"
         corePath: "hardware/teensy/avr/cores/teensy3"
         coreLibrariesPath: "hardware/teensy/avr/libraries" // Arduino core libs
+        coreIncludePaths: [corePath+"/util"/*, corePath+"/avr"*/]
     }
 
     Properties {
-        condition: arduinoBuildSystem === "avr"
+        condition: buildSystemRoot.arduinoBuildSystem === "avr"
 
         cpp.cFlags: outer.concat(["-fno-fat-lto-objects"])
         cpp.cxxFlags: outer.concat(["-fpermissive","-fno-threadsafe-statics","-felide-constructors"])
