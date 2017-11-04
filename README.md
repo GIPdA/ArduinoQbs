@@ -14,7 +14,7 @@ Qt Creator is a very good C++ IDE, targeted for Qt obviously but it can handle a
 Things you loose at the moment are the easy board selector, the integrated library manager and the integrated serial console. Theses could be solved using plugins, which are on the todo list.
 
 
-#### Working yet:
+#### Working:
 - Teensy compilation and uploading using genuine Teensy Loader (all Teensy 3.x boards)
 - AVR compilation and uploading (only pro mini supported yet, other boards will come)
 
@@ -87,7 +87,9 @@ Open what was ```ArduinoQbs.qbs``` in Qt Creator to add the project to your curr
 In the Projects Tab (on the left), Build & Run, add the toolchain for your project (Teensy or AVR) and remove the Qt Kit if needed (it's usually the default kit).
 
 
-#### 4. Edit Run configuration
+#### 4. Edit Build & Run configurations
+
+Edit the install directory as specified in ```ArduinoQbs.qbs``` file under the "Build Configuration Guide" comment.
 
 Add a custom executable configuration and set the fields as specified in ```ArduinoQbs.qbs``` file under the "Run Configuration" comment.
 
