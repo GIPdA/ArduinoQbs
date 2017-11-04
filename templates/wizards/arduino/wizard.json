@@ -1,0 +1,111 @@
+{
+    "version": 1,
+    "supportedProjectTypes": [ "Qbs.QbsProject" ],
+    "id": "P.Arduino",
+    "category": "I.Projects",
+    "trDescription": "Creates a Arduino project.",
+    "trDisplayName": "Arduino Project",
+    "trDisplayCategory": "Non-Qt Project",
+    "icon": "processing.icns",
+    "enabled": "[ %{Plugins} ].indexOf('QbsProjectManager') >= 0}",
+
+    "options":
+    [
+        { "key": "ProjectFile", "value": "%{JS: '%{QbsFile}'}" },
+        { "key": "QbsFile", "value": "%{JS: Util.fileName('%{ProjectDirectory}/%{ProjectName}', 'qbs')}" },
+        { "key": "CppFileName", "value": "%{JS: 'main.' + Util.preferredSuffix('text/x-c++src')}" },
+        { "key": "BoardRef", "value": "%{JS: '%{BoardSelection}'}" }
+    ],
+
+    "pages":
+    [
+        {
+            "trDisplayName": "Project Location",
+            "trShortTitle": "Location",
+            "typeId": "Project"
+        },
+        {
+            "trDisplayName": "Define Board",
+            "trShortTitle": "Board",
+            "typeId": "Fields",
+            "enabled": "%{JS: ! %{IsSubproject}}",
+            "data":
+            [
+                {
+                    "name": "BoardSelection",
+                    "trDisplayName": "Board:",
+                    "type": "ComboBox",
+                    "data":
+                    {
+                        "index": 1,
+                        "items":
+                        [
+                            {
+                                "trKey": "Teensy 3.0",
+                                "value": "teensy30"
+                            },
+                            {
+                                "trKey": "Teensy 3.1/3.2",
+                                "value": "teensy32"
+                            },
+                            {
+                                "trKey": "Teensy 3.5",
+                                "value": "teensy35"
+                            },
+                            {
+                                "trKey": "Teensy 3.6",
+                                "value": "teensy36"
+                            },
+
+                            {
+                                "trKey": "Pro Mini 5V @ 16MHz",
+                                "value": "pro5Vatmega328"
+                            },
+                            {
+                                "trKey": "Pro Mini 3.3V @ 8MHz",
+                                "value": "pro3V3atmega328"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "trDisplayName": "Kit Selection",
+            "trShortTitle": "Kits",
+            "typeId": "Kits",
+            "enabled": "%{JS: ! %{IsSubproject}}",
+            "data": { "projectFilePath": "%{ProjectFile}" }
+        },
+        {
+            "trDisplayName": "Project Management",
+            "trShortTitle": "Summary",
+            "typeId": "Summary"
+        }
+    ],
+    "generators":
+    [
+        {
+            "typeId": "File",
+            "data":
+            [
+                {
+                    "source": "file.qbs",
+                    "target": "%{QbsFile}",
+                    "openAsProject": true,
+                    "condition": "%{JS: '%{BuildSystem}' === 'qbs'}"
+                },
+                {
+                    "source": "main.cpp",
+                    "target": "%{CppFileName}",
+                    "openInEditor": true
+                },
+                {
+                    "source": "../git.ignore",
+                    "target": ".gitignore",
+                    "condition": "%{JS: ! %{IsSubproject} && '%{VersionControl}' === 'G.Git'}"
+                }
+            ]
+        }
+    ]
+}
