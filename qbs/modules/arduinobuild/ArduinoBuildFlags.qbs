@@ -1,19 +1,17 @@
 import qbs
 
 Module {
-    id: buildSystemRoot
-    condition: true
     Depends { name: "cpp" }
 
     property string compilerPath: ""
     property string corePath: ""
     property string coreLibrariesPath: ""
-    property string arduinoBuildSystem: "teensy3"
     property pathList coreIncludePaths: []
 
     Properties {
-        condition: buildSystemRoot.arduinoBuildSystem === "teensy3"
+        condition: arduinoBuildSystem === "teensy3"
 
+        cpp.architecture: "armv4t"
         //cpp.cFlags: outer.concat()
         cpp.cxxFlags: outer.concat(["-MMD","-felide-constructors"])
         cpp.assemblerFlags: outer.concat(["-x","assembler-with-cpp"])
@@ -47,8 +45,9 @@ Module {
     }
 
     Properties {
-        condition: buildSystemRoot.arduinoBuildSystem === "avr"
+        condition: arduinoBuildSystem === "avr"
 
+        cpp.architecture: "avr"
         cpp.cFlags: outer.concat(["-fno-fat-lto-objects"])
         cpp.cxxFlags: outer.concat(["-fpermissive","-fno-threadsafe-statics","-felide-constructors"])
         cpp.assemblerFlags: outer.concat(["-x","assembler-with-cpp"])

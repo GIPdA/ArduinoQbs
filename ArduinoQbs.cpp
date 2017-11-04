@@ -1,10 +1,10 @@
-//#include "WProgram.h"
 #include "Arduino.h"
 
+int const ledPin = LED_BUILTIN;
 
 void setup()
 {
-    pinMode(13, OUTPUT);
+    pinMode(ledPin, OUTPUT);
 
     Serial.begin(115200);
     delay(1000);
@@ -14,18 +14,18 @@ void setup()
 
 void loop()
 {
-    digitalWrite(13, HIGH);
+    digitalWrite(ledPin, HIGH);
     delay(500);
-    digitalWrite(13, LOW);
+    digitalWrite(ledPin, LOW);
     delay(500);
 
-    Serial.println("Test7!");
+    /*Serial.println("Test!");
 
     if (Serial.available()) {
         Serial.read();
-        digitalWrite(13, HIGH);
+        digitalWrite(ledPin, HIGH);
         delay(500);
-        digitalWrite(13, LOW);
+        digitalWrite(ledPin, LOW);
         delay(500);
-    }
+    }//*/
 }

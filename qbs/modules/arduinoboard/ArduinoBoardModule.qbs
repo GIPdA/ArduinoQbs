@@ -3,12 +3,11 @@ import qbs.FileInfo
 import qbs.Process
 
 Module {
-    id: boardModuleRoot
-    condition: true
     Depends { name: "cpp" }
 
-    property string cpu: ""
-    property string arduinoBuildSystem: ""
+    property string cpu
+    property string frequency // Default cpu frequency
+    property string arduinoBuildSystem
 
     Properties {
         condition: boardName === "teensy30"
@@ -20,6 +19,8 @@ Module {
         property stringList flags_ldspecs: ["-mthumb", "-T"+corePath+"/mk20dx128.ld"]
         property stringList flags_libs: ["arm_cortexM4l_math"]
 
+        frequency: "48"
+
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         //cpp.libraryPaths:
@@ -27,7 +28,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        boardModuleRoot.arduinoBuildSystem: "teensy3"
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -40,6 +41,8 @@ Module {
         property stringList flags_ldspecs: ["-mthumb", "-T"+corePath+"/mk20dx256.ld"]
         property stringList flags_libs: ["arm_cortexM4l_math"]
 
+        frequency: "72"
+
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         //cpp.libraryPaths:
@@ -47,7 +50,7 @@ Module {
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        boardModuleRoot.arduinoBuildSystem: "teensy3"
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -60,13 +63,15 @@ Module {
         property stringList flags_ldspecs: ["-mthumb", "-T"+corePath+"/mk64fx512.ld"]
         property stringList flags_libs: ["arm_cortexM4lf_math"]
 
+        frequency: "180"
+
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        boardModuleRoot.arduinoBuildSystem: "teensy3"
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -79,13 +84,15 @@ Module {
         property stringList flags_ldspecs: ["-mthumb", "-T"+corePath+"/mk66fx1m0.ld"]
         property stringList flags_libs: ["arm_cortexM4lf_math"]
 
+        frequency: "180"
+
         cpp.commonCompilerFlags: outer.concat(flags_cpu)
 
         cpp.dynamicLibraries: outer.concat(flags_libs)
         cpp.driverFlags: outer.concat(flags_cpu, flags_ldspecs)
         cpp.defines: outer.concat(flags_defines)
 
-        boardModuleRoot.arduinoBuildSystem: "teensy3"
+        arduinoBuildSystem: "teensy3"
     }
 
     Properties {
@@ -108,7 +115,7 @@ Module {
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
 
-        boardModuleRoot.arduinoBuildSystem: "avr"
+        arduinoBuildSystem: "avr"
     }
 
     Properties {
@@ -131,6 +138,6 @@ Module {
 
         cpp.includePaths: outer.concat([corePath+"/../../variants/eightanaloginputs"])
 
-        boardModuleRoot.arduinoBuildSystem: "avr"
+        arduinoBuildSystem: "avr"
     }
 }

@@ -23,20 +23,25 @@ CppApplication {
         description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
     }
 
-    /* #### Run Configuration (Teensy) ####
-     * Executable:              /usr/bin/env
-     * Command line arguments:  %{CurrentProject:Path}/build/teensyupload %{CurrentProject:FileBaseName} %{CurrentProject:Path}
-     * Working directory:       %{CurrentProject:Path}/build
+
+    /* #### Build Configuration Guide ####
+     * /!\ Install root must be the same as build directory. /!\
+     * Can't use default install root location because we cannot get the path in the run configuration.
+     * But you can set the build directory you want.
+     *
+     * 1. Check "Install"
+     * 2. Uncheck "Use default location"
+     * 3. Change installation directory to default build directory or %{buildDir} (remove everything after the default build dir)
      */
 
-    /* #### Run Configuration (AVR, macOS & Unix) ####
+    /* #### Run Configuration ####
      * Executable:              /usr/bin/env
-     * Command line arguments:  %{CurrentProject:Path}/build/avrupload %{CurrentProject:FileBaseName}
-     * Working directory:       %{CurrentProject:Path}/build
+     * Command line arguments:  %{CurrentProject:BuildPath}/upload.sh
+     * Working directory:       %{buildDir}
      */
 
 
-    /* #### FREQUENCY (Teensy) ####
+    /* #### FREQUENCY ####
     // 2   MHz      31  35  36
     // 4   MHz      31  35  36
     // 8   MHz      31  35  36
@@ -54,7 +59,8 @@ CppApplication {
     // 240 MHz              36o
     // Note: o = overclock
     //*/
-    property string frequency: "48"     // CPU MHz
+    // CPU clock in MHz
+    property string frequency: arduinoboard.frequency
 
 
     /* #### USB (Teensy) ####
@@ -120,12 +126,18 @@ CppApplication {
 
 
     qbsSearchPaths: "qbs"
-    Depends { name: "arduinoboard" }
-    Depends { name: "arduinobuild" }
+    Depends { name: "arduinoboard" }  // Setup flags and properties for the board
+    Depends { name: "arduinobuild" }  // Setup build system
+    Depends { name: "arduinoupload" } // Rules for code upload
 
 
     // Build system to use, used by arduinobuild.
     property string arduinoBuildSystem: arduinoboard.arduinoBuildSystem
+
+    property string printBuildSystem: {
+        console.warn("Build system: " + arduinoboard.arduinoBuildSystem)
+        return arduinoboard.arduinoBuildSystem
+    }
 
 
     // Path to arduino 'Java' folder (the one with the 'hardware' folder in)
@@ -191,18 +203,6 @@ CppApplication {
     // Libs priority: Project libs > External libs > Core libs
 
     property string externalLibrariesPath_abs: FileInfo.isAbsolutePath(externalLibrariesPath) ? externalLibrariesPath : projectPath+"/"+externalLibrariesPath
-
-
-    /*Probe {
-        id: testprobe
-        condition: true
-
-        configure: {
-
-            console.warn("libs: " + librariesIncludePaths);
-            console.warn("core path:" + corePath);
-        }
-    }//*/
 
 
     // Time
@@ -276,7 +276,7 @@ CppApplication {
     // Core source files
     Group {
         name: "Core files"
-        files: ["*.c", "*.cpp"]
+        files: ["*.c", "*.cpp", "*.h"]
         prefix: corePath+"/"
         cpp.warningLevel: "none"
     }
@@ -412,94 +412,6 @@ CppApplication {
     }
 
 
-    // Write script to upload hex file to the avr board
-    // TODO: don't use probe
-    /*Probe {
-        id: avrUploadProbe
-        condition: arduinoBuildSystem === "avr"
-
-        configure: { // TODO: use template
-            // Setup command
-            var avrdude = compilerPath + "/avr/bin/avrdude"
-            var config = compilerPath + "/avr/etc/avrdude.conf"
-
-            var cmd = [avrdude, "-C"+config,
-                       "-v",
-                       "-p"+arduinoboard.cpu,
-                       "-carduino",
-                       "-P"+serialport, "-b57600",
-                       "-D",
-                       "-Uflash:w:$1.hex:i"
-                    ]
-
-            // Write script
-            var f = TextFile(projectPath + "/build/avrupload", TextFile.WriteOnly)
-            f.writeLine(cmd.join(' '))
-            f.close();
-            // TODO: chmod u+x
-
-            found = true
-        }
-    }
-
-    // Write script to upload hex file to teensy
-    // TODO: don't use probe
-    Probe {
-        id: teensyUploadProbe
-        condition: arduinoBuildSystem === "teensy3"
-
-        configure: {
-            // Read template file
-            var tpl = TextFile(projectPath + "/qbs/tools/teensy_load.tpl", TextFile.ReadOnly)
-            var tplStr = tpl.readAll()
-            tpl.close()
-
-            // Replace tags
-            tplStr = tplStr.replace(/\[TEENSY_TOOLS_PATH\]/gi, compilerPath)
-
-            // Write script
-            var f = TextFile(projectPath + "/build/teensyupload", TextFile.WriteOnly)
-            f.write(tplStr)
-            f.close();
-            // TODO: chmod u+x
-
-            found = true
-        }
-    }//*/
-
-
-    Rule {
-        inputs: ["ihex"]
-
-        Artifact {
-            fileTags: ["upload"]
-            filePath: product.destinationDirectory + "/" + "upload.sh"
-        }
-
-        prepare: {
-            var cmd = new JavaScriptCommand();
-            cmd.description = "Upload: " + FileInfo.fileName(input.filePath)
-            //cmd.silent = true;
-            cmd.sourceCode = function() {
-                // Read template file
-                var tpl = TextFile(product.projectPath + "/qbs/tools/teensy_load.tpl", TextFile.ReadOnly)
-                var tplStr = tpl.readAll()
-                tpl.close()
-
-                // Replace tags
-                tplStr = tplStr.replace(/\[TEENSY_TOOLS_PATH\]/gi, product.compilerPath)
-
-                //console.warn(tplStr)
-
-                // Write script
-                var f = TextFile(output.filePath, TextFile.WriteOnly)
-                f.write(tplStr)
-                f.close();
-                // TODO: chmod u+x
-            };
-            return [cmd];
-        }
-    }
 
 
     type: ["application", "ihex", "eeprom", "binary", "size", "upload"]
@@ -507,20 +419,20 @@ CppApplication {
     cpp.executableSuffix: ".elf"
 
 
-    // Install hex to build dir for upload (need to check "Install" in Project Build Settings)
-    //qbs.installRoot: path
-    // TODO: installRoot cannot be modified by code, find an alternative
+    // Install hex to known dir for upload (need to check "Install" in Project Build Settings)
+    // TODO: installRoot needs to be manually set in project config panel, find an alternative to not do that (no qtc variable to install root)
     Group {
         name: "Hex - Teensy Loader"
         fileTagsFilter: ["application", "ihex", "upload"]
         qbs.install: true
         //qbs.installDir: "build"
-    }//*/
+    }
 
 
 
     // Binaries generation
 
+    // Hex
     Rule {
         inputs: ["application"]
 
@@ -562,6 +474,7 @@ CppApplication {
     }
 
 
+    // Binary
     Rule {
         inputs: ["application"]
 
@@ -581,6 +494,7 @@ CppApplication {
     }
 
 
+    // Print binary size
     Rule {
         multiplex: true
         inputs: ["application"]

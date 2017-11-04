@@ -5,7 +5,7 @@ ArduinoApplication {
     board: "teensy30"    // Board Ref: 30, 31, 35, 36, LC
     frequency: "48" // CPU Frequency in MHz
 
-    //board: "pro3V3atmega328"
+    //board: "pro5Vatmega328"
 
     serialport: "/dev/cu.usbmodem1411"
 
@@ -33,16 +33,20 @@ ArduinoApplication {
 }
 
 
-/* #### Run Configuration (Teensy) ####
- * Executable:              /usr/bin/env
- * Command line arguments:  %{CurrentProject:Path}/build/teensyupload %{CurrentProject:FileBaseName} %{CurrentProject:Path}
- * Working directory:       %{CurrentProject:Path}/build
+/* #### Build Configuration Guide ####
+ * /!\ Install root must be the same as build directory. /!\
+ * Can't use default install root location because we cannot get the path in the run configuration.
+ * But you can set the build directory you want.
+ *
+ * 1. Check "Install"
+ * 2. Uncheck "Use default location"
+ * 3. Change installation directory to default build directory or %{buildDir} (remove everything after the default build dir)
  */
 
-/* #### Run Configuration (AVR, macOS & Unix) ####
+/* #### Run Configuration ####
  * Executable:              /usr/bin/env
- * Command line arguments:  %{CurrentProject:Path}/build/avrupload %{CurrentProject:FileBaseName}
- * Working directory:       %{CurrentProject:Path}/build
+ * Command line arguments:  %{CurrentProject:BuildPath}/upload.sh
+ * Working directory:       %{buildDir}
  */
 
 
