@@ -1,0 +1,11 @@
+{
+    \"Name\" : \"SerialTerminal\",
+    \"Version\" : \"0.0.1\",
+    \"CompatVersion\" : \"0.0.1\",
+    \"Vendor\" : \"GIPdA\",
+    \"Copyright\" : \"(C) GIPdA\",
+    \"License\" : \"Put your license information here\",
+    \"Description\" : \"Serial Port Terminal\",
+    \"Url\" : \"https://github.com/GIPdA\",
+    $$dependencyList
+}
