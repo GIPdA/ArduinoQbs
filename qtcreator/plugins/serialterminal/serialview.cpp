@@ -84,6 +84,9 @@ bool SerialView::open(const QString& portName)
         return false;
     }
 
+    m_serialPort->setDataTerminalReady(false);
+    m_serialPort->setRequestToSend(false);
+
     emit connectedChanged(true);
     return true;
 }
@@ -106,6 +109,14 @@ void SerialView::handleReadyRead()
 void SerialView::clearContent()
 {
     m_textEdit->clear();
+}
+
+void SerialView::doReset()
+{
+    m_serialPort->setDataTerminalReady(true);
+    QTimer::singleShot(Constants::RESET_DELAY, [&]() {
+        m_serialPort->setDataTerminalReady(false);
+    });
 }
 
 void SerialView::sendInput()

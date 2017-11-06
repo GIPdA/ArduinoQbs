@@ -35,6 +35,8 @@ public slots:
     void close();
     void clearContent();
 
+    void doReset();
+
 private slots:
     void handleReadyRead();
     void reconnectTimeout();

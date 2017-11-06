@@ -47,7 +47,7 @@ QList<QWidget*> SerialOutputPane::toolBarWidgets() const
     QWidgetList widgets;
     // TODO
 
-    widgets << m_connectButton << m_disconnectButton
+    widgets << m_connectButton << m_disconnectButton << m_resetButton
             << m_portsSelection << m_baudRateSelection; //m_refreshPortsButton;
 
     return widgets;
@@ -118,15 +118,6 @@ bool SerialOutputPane::canNavigate() const
 
 void SerialOutputPane::createToolButtons()
 {
-    /*m_refreshPortsButton = new QToolButton(); // TODO: set icon
-    m_refreshPortsButton->setIcon(Utils::Icons::RELOAD.icon());
-    m_refreshPortsButton->setCheckable(false);
-    m_refreshPortsButton->setToolTip(tr("Rescan for available serial ports."));
-    m_refreshPortsButton->setToolButtonStyle(Qt::ToolButtonIconOnly);//*/
-
-    //connect(m_refreshPortsButton, &QToolButton::clicked, this, &SerialOutputPane::updatePortsList);
-
-
     // Connect button
     m_connectButton = new QToolButton;
     m_connectButton->setIcon(Utils::Icons::RUN_SMALL_TOOLBAR.icon());
@@ -156,6 +147,18 @@ void SerialOutputPane::createToolButtons()
             this, &SerialOutputPane::disconnectControl);//*/
     connect(m_disconnectButton, &QToolButton::clicked,
             this, &SerialOutputPane::disconnectControl);
+
+
+    // Reset button
+    m_resetButton = new QToolButton;
+    m_resetButton->setIcon(Utils::Icons::RELOAD.icon());
+    m_resetButton->setToolTip(tr("Reset the board"));
+    m_resetButton->setAutoRaise(true);
+    m_resetButton->setEnabled(false);
+    //m_disconnectButton->setDefaultAction(cmd->action());
+
+    connect(m_resetButton, &QToolButton::clicked,
+            this, &SerialOutputPane::resetControl);
 
 
 
@@ -201,6 +204,7 @@ void SerialOutputPane::connectControl()
 
     if (m_terminalView->open()) {
         qDebug("Connected.");
+        // TODO: reset on connect (setting)
     } else {
         qDebug("Connection failed.");
     }
@@ -212,10 +216,17 @@ void SerialOutputPane::disconnectControl()
     qDebug("Disconnected.");
 }
 
+void SerialOutputPane::resetControl()
+{
+    m_terminalView->doReset();
+    qDebug("Reset sent.");
+}
+
 void SerialOutputPane::connectedChanged(bool connected)
 {
     m_disconnectButton->setEnabled(connected);
     m_connectButton->setEnabled(!connected);
+    m_resetButton->setEnabled(connected);
 
     m_portsSelection->setEnabled(!connected);
     m_baudRateSelection->setEnabled(!connected);

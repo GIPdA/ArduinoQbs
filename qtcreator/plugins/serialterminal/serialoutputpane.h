@@ -52,6 +52,7 @@ private:
 
     void connectControl();
     void disconnectControl();
+    void resetControl();
     void connectedChanged(bool connected);
 
     SerialView* m_terminalView {nullptr};
@@ -60,6 +61,7 @@ private:
     QAction* m_disconnectAction {nullptr};
     QToolButton* m_connectButton {nullptr};
     QToolButton* m_disconnectButton {nullptr};
+    QToolButton* m_resetButton {nullptr};
     ComboBox* m_portsSelection {nullptr};
     ComboBox* m_baudRateSelection {nullptr};
 };
