@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QString>
 #include <QVBoxLayout>
+#include <QScrollBar>
 
 #include "serialterminalconstants.h"
 
@@ -102,7 +103,20 @@ void SerialView::close()
 void SerialView::handleReadyRead()
 {
     auto qb = m_serialPort->readAll();
-    m_textEdit->append(QString::fromLocal8Bit(qb));
+
+    QTextCursor prev_cursor { m_textEdit->textCursor() };
+    auto scollbar = m_textEdit->verticalScrollBar();
+
+    int const sliderPosition = scollbar->sliderPosition();
+    bool const sliderAtMax = sliderPosition == scollbar->maximum();
+
+    m_textEdit->moveCursor(QTextCursor::End);
+    m_textEdit->insertPlainText(QString::fromLocal8Bit(qb));
+    m_textEdit->setTextCursor(prev_cursor);
+
+    // If the scroll was at the bottom, scroll to bottom,
+    //  otherwise stay at the position set by the user
+    scollbar->setSliderPosition(sliderAtMax ? scollbar->maximum() : sliderPosition);
 }
 
 
