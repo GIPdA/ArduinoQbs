@@ -7,6 +7,7 @@
 #include "serialview.h"
 #include "serialdevicemodel.h"
 #include "combobox.h"
+#include "settings.h"
 
 QT_BEGIN_NAMESPACE
 class QToolButton;
@@ -23,7 +24,7 @@ class SerialOutputPane : public Core::IOutputPane
     Q_OBJECT
 
 public:
-    SerialOutputPane();
+    SerialOutputPane(Settings& settings);
     ~SerialOutputPane();
 
 
@@ -44,6 +45,8 @@ public:
     void goToNext() override;
     void goToPrev() override;
     bool canNavigate() const override;
+
+    void close();
 
 private:
     void createToolButtons();

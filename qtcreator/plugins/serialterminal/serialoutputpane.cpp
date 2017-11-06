@@ -22,8 +22,8 @@
 namespace SerialTerminal {
 namespace Internal {
 
-SerialOutputPane::SerialOutputPane() :
-    m_terminalView(new SerialView)
+SerialOutputPane::SerialOutputPane(Settings &settings) :
+    m_terminalView(new SerialView(settings))
 {
     createToolButtons();
 
@@ -45,10 +45,9 @@ QWidget* SerialOutputPane::outputWidget(QWidget* parent)
 QList<QWidget*> SerialOutputPane::toolBarWidgets() const
 {
     QWidgetList widgets;
-    // TODO
 
     widgets << m_connectButton << m_disconnectButton << m_resetButton
-            << m_portsSelection << m_baudRateSelection; //m_refreshPortsButton;
+            << m_portsSelection << m_baudRateSelection;
 
     return widgets;
 }
@@ -112,6 +111,11 @@ void SerialOutputPane::goToPrev()
 bool SerialOutputPane::canNavigate() const
 {
     return false;
+}
+
+void SerialOutputPane::close()
+{
+    m_terminalView->close();
 }
 
 
@@ -218,8 +222,7 @@ void SerialOutputPane::disconnectControl()
 
 void SerialOutputPane::resetControl()
 {
-    m_terminalView->doReset();
-    qDebug("Reset sent.");
+    m_terminalView->pulseDTR();
 }
 
 void SerialOutputPane::connectedChanged(bool connected)

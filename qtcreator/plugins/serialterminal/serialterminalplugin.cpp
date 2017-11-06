@@ -18,7 +18,6 @@ namespace Internal {
 
 SerialTerminalPlugin::SerialTerminalPlugin()
 {
-    // Create your members
 }
 
 SerialTerminalPlugin::~SerialTerminalPlugin()
@@ -39,7 +38,9 @@ bool SerialTerminalPlugin::initialize(const QStringList &arguments, QString *err
     Q_UNUSED(arguments)
     Q_UNUSED(errorString)
 
-    QAction *action = new QAction(tr("SerialTerminal Action"), this);
+    m_settings.load(Core::ICore::settings());
+
+    /*QAction *action = new QAction(tr("SerialTerminal Action"), this);
     Core::Command *cmd = Core::ActionManager::registerAction(action, Constants::ACTION_ID,
                                                              Core::Context(Core::Constants::C_GLOBAL));
     cmd->setDefaultKeySequence(QKeySequence(tr("Ctrl+Alt+Meta+A")));
@@ -48,12 +49,12 @@ bool SerialTerminalPlugin::initialize(const QStringList &arguments, QString *err
     Core::ActionContainer *menu = Core::ActionManager::createMenu(Constants::MENU_ID);
     menu->menu()->setTitle(tr("SerialTerminal"));
     menu->addAction(cmd);
-    Core::ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
+    Core::ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);//*/
 
 
     // Create serial output pane
-    auto pane = new SerialOutputPane();
-    addAutoReleasedObject(pane);
+    m_serialOutputPane = new SerialOutputPane(m_settings);
+    addAutoReleasedObject(m_serialOutputPane);
 
     return true;
 }
@@ -67,11 +68,22 @@ void SerialTerminalPlugin::extensionsInitialized()
 
 ExtensionSystem::IPlugin::ShutdownFlag SerialTerminalPlugin::aboutToShutdown()
 {
-    // Save settings
+    m_serialOutputPane->close();
+
     // Disconnect from signals that are not needed during shutdown
     // Hide UI (if you add UI that is not in the main window directly)
     return SynchronousShutdown;
 }
+
+
+void SerialTerminalPlugin::settingsChanged(const Settings &settings)
+{
+    settings.save(Core::ICore::settings());
+    m_settings = settings;
+
+    //m_serialOutputPane->setSettings(m_settings);
+}
+
 
 void SerialTerminalPlugin::triggerAction()
 {

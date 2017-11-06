@@ -2,6 +2,7 @@
 
 #include "serialterminal_global.h"
 #include "serialoutputpane.h"
+#include "settings.h"
 
 #include <extensionsystem/iplugin.h>
 
@@ -22,7 +23,12 @@ public:
     ShutdownFlag aboutToShutdown();
 
 private:
+    void settingsChanged(const Settings &settings);
+
     void triggerAction();
+
+    Settings m_settings;
+    SerialOutputPane* m_serialOutputPane;
 };
 
 } // namespace Internal

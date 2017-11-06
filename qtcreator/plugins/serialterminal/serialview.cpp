@@ -11,14 +11,27 @@ namespace SerialTerminal {
 namespace Internal {
 
 
-SerialView::SerialView(QWidget *parent) :
+SerialView::SerialView(Settings &settings, QWidget *parent) :
     QWidget(parent),
     m_serialPort(new QSerialPort(this)),
     m_textEdit(new QTextEdit(this)),
-    m_inputLine(new QLineEdit(this)),
-    m_lineEnd("\n")
+    m_inputLine(new QLineEdit(this))
 {
-    m_serialPort->setBaudRate(QSerialPort::Baud115200);
+    m_serialPort->setBaudRate(settings.baudRate);
+    m_serialPort->setDataBits(settings.dataBits);
+    m_serialPort->setParity(settings.parity);
+    m_serialPort->setStopBits(settings.stopBits);
+    m_serialPort->setFlowControl(settings.flowControl);
+
+    if (!settings.portName.isEmpty())
+        m_serialPort->setPortName(settings.portName);
+
+    m_lineEnd = settings.enterKeyEmulation;
+
+    m_initialDTRState = settings.initialDTRState;
+    m_initialRTSState = settings.initialRTSState;
+    m_clearInputOnSend = settings.clearInputOnSend;
+
 
     m_reconnectTimer.setInterval(Constants::RECONNECT_DELAY);
     m_reconnectTimer.setSingleShot(false);
@@ -85,8 +98,8 @@ bool SerialView::open(const QString& portName)
         return false;
     }
 
-    m_serialPort->setDataTerminalReady(false);
-    m_serialPort->setRequestToSend(false);
+    m_serialPort->setDataTerminalReady(m_initialDTRState);
+    m_serialPort->setRequestToSend(m_initialRTSState);
 
     emit connectedChanged(true);
     return true;
@@ -125,11 +138,11 @@ void SerialView::clearContent()
     m_textEdit->clear();
 }
 
-void SerialView::doReset()
+void SerialView::pulseDTR()
 {
-    m_serialPort->setDataTerminalReady(true);
+    m_serialPort->setDataTerminalReady(!m_initialDTRState);
     QTimer::singleShot(Constants::RESET_DELAY, [&]() {
-        m_serialPort->setDataTerminalReady(false);
+        m_serialPort->setDataTerminalReady(m_initialDTRState);
     });
 }
 
@@ -139,7 +152,9 @@ void SerialView::sendInput()
         m_serialPort->write(m_inputLine->text().toLocal8Bit());
         m_serialPort->write(m_lineEnd.toLocal8Bit());
         // TODO: add history
-        //m_inputLine->clear();
+
+        if (m_clearInputOnSend)
+            m_inputLine->clear();
     } else {
         // TODO: show error
         qDebug("Not connected, cannot send!");

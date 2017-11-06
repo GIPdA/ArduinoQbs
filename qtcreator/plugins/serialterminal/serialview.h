@@ -7,6 +7,7 @@
 #include <QTextEdit>
 #include <QLineEdit>
 
+#include "settings.h"
 
 namespace SerialTerminal {
 namespace Internal {
@@ -17,7 +18,7 @@ class SerialView : public QWidget
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
 
 public:
-    explicit SerialView(QWidget *parent = 0);
+    explicit SerialView(Settings &settings, QWidget *parent = 0);
 
     bool connected() const;
 
@@ -35,7 +36,7 @@ public slots:
     void close();
     void clearContent();
 
-    void doReset();
+    void pulseDTR();
 
 private slots:
     void handleReadyRead();
@@ -56,6 +57,10 @@ private:
     QTextEdit* m_textEdit {nullptr};
     QLineEdit* m_inputLine {nullptr};
     QString m_lineEnd;
+
+    bool m_initialDTRState {false};
+    bool m_initialRTSState {false};
+    bool m_clearInputOnSend {false};
 };
 
 } // namespace Internal
