@@ -100,7 +100,7 @@ ArduinoCore {
     }
 
     Properties {
-        condition: boardName === "pro5V" // Arduino Pro or Pro Mini 5V, 16MHz, ATmega328p
+        condition: boardName === "pro5Vatmega328p" // Arduino Pro or Pro Mini 5V, 16MHz, ATmega328p
         //cpu: "atmega328p"
 
         property stringList flags_cpu: ["-mmcu=atmega328p"]
@@ -123,11 +123,11 @@ ArduinoCore {
     }
 
     Properties {
-        condition: boardName === "pro3V3" // Arduino Pro or Pro Mini 3.3V, 16MHz, ATmega328p
+        condition: boardName === "pro3V3atmega328p" // Arduino Pro or Pro Mini 3.3V, 8MHz, ATmega328p
         //cpu: "atmega328p"
 
         property stringList flags_cpu: ["-mmcu=atmega328p"]
-        property stringList flags_defines: ["AVR_PRO", "ARDUINO_AVR_PRO", "ARDUINO_ARCH_AVR"] // TODO: check defines
+        property stringList flags_defines: ["AVR_PRO", "ARDUINO_ARCH_AVR"] // TODO: check defines
 
         property stringList flags_ldspecs: []
         property stringList flags_libs: []

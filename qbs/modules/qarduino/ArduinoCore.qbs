@@ -1,11 +1,16 @@
 import qbs
+import qbs.FileInfo
+import qbs.File
+import qbs.TextFile
+import qbs.Process
+
 
 ArduinoBase {
     condition: false
     Depends { name: "cpp" }
 
     // FIXME: Workaround for bug QBS-1240, remove comments when fixed
-    compilerPath: arduinoPath+"/hardware/tools"
+    toolsPath: arduinoPath+"/hardware/tools"
 
     corePath: {
         if (arduinoCore === "teensy3")
@@ -65,7 +70,7 @@ ArduinoBase {
 
         //TODO: check compiler and throw error if not compatible
 
-        cpp.architecture: "avr"
+        cpp.architecture: "avr2"
         cpp.cFlags: ["-fno-fat-lto-objects"]
         cpp.cxxFlags: ["-fpermissive","-fno-threadsafe-statics","-felide-constructors"]
         cpp.assemblerFlags: ["-x","assembler-with-cpp"]
@@ -85,8 +90,105 @@ ArduinoBase {
 
         // Relative paths
         // FIXME: Workaround for bug QBS-1240, remove comments when fixed
-        //compilerPath: "hardware/tools"
-        //corePath: "hardware/arduino/avr/cores/arduino"
-        //coreLibrariesPath: "hardware/arduino/avr/libraries" // Arduino core libs
-    }//*/
+//        compilerPath: "hardware/tools"
+//        corePath: "hardware/arduino/avr/cores/arduino"
+//        coreLibrariesPath: "hardware/arduino/avr/libraries" // Arduino core libs
+    }
+
+
+    property string uploadTemplatesPath: path+"/tpl"
+
+    // Write script to upload hex file to the Teensy using Teensy Loader shipped with Teensyduino install
+    Rule {
+        inputs: ["ihex"]
+
+        condition: arduinoCore === "teensy3"
+
+        Artifact {
+            fileTags: ["upload"]
+            filePath: product.destinationDirectory + "/" + "upload.sh"
+        }
+
+        prepare: {
+            var cmd = new JavaScriptCommand();
+            cmd.description = "Upload Teensy: " + FileInfo.fileName(input.filePath)
+            //cmd.silent = true;
+
+            cmd.templateFilePath = product.moduleProperty("qarduino", "uploadTemplatesPath") + "/teensy_upload.tpl"
+            cmd.toolsPath = product.moduleProperty("qarduino", "toolsPath")
+
+            cmd.sourceCode = function() {
+                // Read template file
+                var tpl = TextFile(templateFilePath, TextFile.ReadOnly)
+                var tplStr = tpl.readAll()
+                tpl.close()
+
+                // Replace tags
+                tplStr = tplStr.replace(/\[TEENSY_TOOLS_PATH\]/gi, toolsPath)
+                tplStr = tplStr.replace(/\[TEENSY_HEX_PATH\]/gi, FileInfo.path(input.filePath))
+                tplStr = tplStr.replace(/\[TEENSY_HEX_BASENAME\]/gi, FileInfo.baseName(input.filePath))
+
+                // Write script
+                var f = TextFile(output.filePath, TextFile.WriteOnly)
+                f.write(tplStr)
+                f.close();
+
+                // Script needs to be executable
+                var process = new Process();
+                process.exec("chmod", ["u+x", output.filePath]);
+                process.close();
+            };
+            return [cmd];
+        }
+    }
+
+    // Write script to upload hex file to AVR using avrdude
+    Rule {
+        inputs: ["ihex"]
+
+        condition: arduinoCore === "avr"
+
+        Artifact {
+            fileTags: ["upload"]
+            filePath: product.destinationDirectory + "/" + "upload.sh"
+        }
+
+        prepare: {
+            var cmd = new JavaScriptCommand();
+            cmd.description = "Upload AVR: " + FileInfo.fileName(input.filePath)
+            //cmd.silent = true;
+
+            cmd.templateFilePath = product.moduleProperty("qarduino", "uploadTemplatesPath") + "/avr_upload.tpl"
+            cmd.toolsPath = product.moduleProperty("qarduino", "toolsPath")
+
+            cmd.cpu = product.moduleProperty("qarduino", "cpu")
+
+            cmd.sourceCode = function() {
+                // Setup command
+                // TODO: use template
+                var avrdude = toolsPath + "/avr/bin/avrdude"
+                var config = toolsPath + "/avr/etc/avrdude.conf"
+
+                var cmd = [avrdude, "-C"+config,
+                           "-v",
+                           "-p"+cpu,
+                           "-carduino",
+                           "-P"+product.serialport, "-b57600",
+                           "-D",
+                           "-Uflash:w:" + input.filePath + ":i"
+                        ]
+
+                // Write script
+                var f = TextFile(output.filePath, TextFile.WriteOnly)
+                f.writeLine(cmd.join(' '))
+                f.close();
+
+                // Script needs to be executable
+                var process = new Process();
+                process.exec("chmod", ["u+x", output.filePath]);
+                process.close();
+            };
+            return [cmd];
+        }
+    }
 }

@@ -4,11 +4,11 @@ Module {
     condition: false
     Depends { name: "cpp" }
 
-    property string arduinoPath
+    property path arduinoPath
 
-    property string compilerPath
-    property string corePath
-    property string coreLibrariesPath
+    property path toolsPath
+    property path corePath
+    property path coreLibrariesPath
     property pathList coreIncludePaths: []
 
     property string arduinoCore

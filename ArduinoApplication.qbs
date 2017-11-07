@@ -115,7 +115,6 @@ CppApplication {
     qarduino.keyLayout: keyLayout
 
 
-
     //cpp.debugInformation: true
     cpp.warningLevel: "all"
 
@@ -128,7 +127,7 @@ CppApplication {
 
     // Debug build system used
     property string printBuildSystem: {
-        console.warn("Build system: " + qarduino.arduinoCore)
+        console.warn("Arduino core: " + qarduino.arduinoCore)
         return qarduino.arduinoCore
     }
 
@@ -142,14 +141,14 @@ CppApplication {
 
         // Default paths to Arduino Java folder on main operating systems.
         if (qbs.hostOS.contains("macos")) {
-            return "/Applications/Arduino.app/Contents/Java/"
+            return "/Applications/Arduino.app/Contents/Java"
         }
         if (qbs.hostOS.contains("linux")) {
             throw "Default Arduino Java folder path for Linux is not implemented yet... please set it manually with 'customArduinoPath'."
-            return "~/Arduino/Java/" // Maybe ??
+            return "~/Arduino/Java" // Maybe ??
         }
         if (qbs.hostOS.contains("windows")) {
-            return "C:/Program Files (x86)/Arduino/Java/"
+            return "C:/Program Files (x86)/Arduino/Java"
         }
     }
 
@@ -167,23 +166,23 @@ CppApplication {
 
 
     // Warn for invalid paths
-    property bool compilerPathExists: {
-        if (!File.exists(qarduino.compilerPath)) {
-            console.warn("Arduino path may be wrong (compiler path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+    property bool toolsPathExists: {
+        if (!File.exists(qarduino.toolsPath)) {
+            throw ("Arduino path may be wrong (tools path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
         return true
     }
     property bool corePathExists: {
         if (!File.exists(qarduino.corePath)) {
-            console.warn("Arduino path may be wrong (core path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            throw ("Arduino path may be wrong (core path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
         return true
     }
     property bool coreLibrariesPathExists: {
         if (!File.exists(qarduino.coreLibrariesPath)) {
-            console.warn("Arduino path may be wrong (core libraries path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
+            throw ("Arduino path may be wrong (core libraries path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
         return true
@@ -276,7 +275,7 @@ CppApplication {
                     l = l.concat(libraries[i]+"/src/*.hpp")
 
                     console.warn("Using Core library: " + libraries[i])
-                    console.info("Using Core library: " + libraries[i])
+                    //console.info("Using Core library: " + libraries[i])
                 }
             }
             return l
@@ -303,7 +302,7 @@ CppApplication {
                     l = l.concat(libraries[i]+"/src/*.hpp")
 
                     console.warn("Using Project library: " + libraries[i])
-                    console.info("Using Project library: " + libraries[i])
+                    //console.info("Using Project library: " + libraries[i])
                 }
             }
 
@@ -333,7 +332,7 @@ CppApplication {
                     l = l.concat(libraries[i]+"/src/*.hpp")
 
                     console.warn("Using External library: " + libraries[i])
-                    console.info("Using External library: " + libraries[i])
+                    //console.info("Using External library: " + libraries[i])
                 }
             }
             return l

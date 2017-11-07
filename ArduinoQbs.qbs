@@ -4,10 +4,10 @@ ArduinoApplication
 {
     // Don't forget to change the compiler accordingly if you change board architecture (i.e. avr/teensy) !
 
-    board: "teensy30"    // Board Ref: 30, 31, 35, 36, LC
+    //board: "teensy30"    // Board Ref: 30, 31, 35, 36, LC
     //frequency: "48" // CPU Frequency in MHz
 
-    //board: "pro5V"
+    board: "pro5Vatmega328p"
 
     serialport: "/dev/cu.usbmodem1411"
 
