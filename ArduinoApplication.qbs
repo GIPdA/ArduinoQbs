@@ -384,6 +384,14 @@ CppApplication {
     }
 
 
+    Probe {
+        id: scanBoards
+        condition: true
+        configure: {
+            Helpers.readBoards("pro", "16MHzatmega328")
+            found = true
+        }
+    }
 
 
     type: ["application", "ihex", "eeprom", "binary", "size", "upload"]

@@ -1,5 +1,6 @@
 
 var File = require("qbs.File");
+var TextFile = require("qbs.TextFile");
 
 
 function getTimes()
@@ -35,4 +36,45 @@ function isProjectLibrary(libName, rootApp)
 function isExternalLibrary(libName, rootApp)
 {
     return File.exists(rootApp.externalLibrariesPath_abs+"/"+libName)
+}
+
+function readBoards(board, variant)
+{
+    var tpl = TextFile("/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/boards.txt", TextFile.ReadOnly)
+    //var tplStr = tpl.readAll()
+
+    var map = {}
+
+    while (!tpl.atEof()) {
+        var str = tpl.readLine()
+
+        if (str.startsWith(board)) {
+            //console.warn(str)
+
+            if (str.contains(variant)) {
+                var n = str.indexOf("build.mcu")
+                if (n > 0) {
+                    map["mcu"] = str.substring(n+10)
+                    console.warn(str.substring(n+10))
+                }
+
+                n = str.indexOf("build.f_cpu")
+                if (n > 0) {
+                    map["fcpu"] = str.substring(n+12)
+                    console.warn(map["fcpu"])
+                }
+            } else {
+                n = str.indexOf("build.variant")
+                if (n > 0) {
+                    map["variant"] = str.substring(n+14)
+                    console.warn(map["variant"])
+                }
+            }
+
+        }
+    }
+
+    tpl.close()
+
+    return map
 }
