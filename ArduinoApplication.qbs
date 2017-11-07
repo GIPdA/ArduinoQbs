@@ -8,6 +8,12 @@ import "qbs/js/functions.js" as Helpers
 CppApplication {
     id: rootApp
 
+    qbsSearchPaths: "qbs"
+    Depends { name: "qarduino" }
+    // FIXME: Why "qarduino"? => Workaround for bug QBS-1240. Maybe change back to "arduino" when fixed.
+
+    // TODO: add uploads to the qarduino module
+
     // Teensy board refs: teensy30, 31, 32, 35, 36, LC
     // AVR board refs: <todo>
     property string board: "undefined"
@@ -15,13 +21,7 @@ CppApplication {
         name: "board"
         description: "The Arduino board name to compile for."
     }
-
-    property string arduinoArch: "undefined"
-    PropertyOptions {
-        name: "arduinoArch"
-        allowedValues: ["teensy3", "avr"]
-        description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
-    }
+    qarduino.boardName: board
 
 
     /* #### Build Configuration Guide ####
@@ -60,7 +60,7 @@ CppApplication {
     // Note: o = overclock
     //*/
     // CPU clock in MHz
-    property string frequency: arduinoboard.frequency
+    property string frequency: qarduino.frequency
 
 
     /* #### USB (Teensy) ####
@@ -81,6 +81,7 @@ CppApplication {
     // No USB                               USB_DISABLED
     //*/
     property string usbType: "USB_SERIAL"
+    qarduino.usbType: usbType
 
 
     /* #### KEYBOARD (Teensy) ####
@@ -111,37 +112,29 @@ CppApplication {
     // usint  US International         US_INTERNATIONAL
     //*/
     property string keyLayout: "FRENCH"
-
+    qarduino.keyLayout: keyLayout
 
 
 
     //cpp.debugInformation: true
     cpp.warningLevel: "all"
 
-    property string boardName: board
     property string serialport: "" // 'auto' to look for a fit?
 
     // If default paths to Arduino install dir doesn't fit, set your own.
     property string customArduinoPath: ""
 
 
-    qbsSearchPaths: "qbs"
-    Depends { name: "arduinoboard" }  // Setup flags and properties for the board
-    Depends { name: "arduinobuild" }  // Setup build system
-    Depends { name: "arduinoupload" } // Rules for code upload
 
-
-    // Build system to use, used by arduinobuild.
-    property string arduinoBuildSystem: arduinoboard.arduinoBuildSystem
-
+    // Debug build system used
     property string printBuildSystem: {
-        console.warn("Build system: " + arduinoboard.arduinoBuildSystem)
-        return arduinoboard.arduinoBuildSystem
+        console.warn("Build system: " + qarduino.arduinoCore)
+        return qarduino.arduinoCore
     }
 
 
     // Path to arduino 'Java' folder (the one with the 'hardware' folder in)
-    property string arduinoPath: {
+    qarduino.arduinoPath: {
         // If custom path to Arduino Java folder, use it.
         if (customArduinoPath != "") {
             return customArduinoPath
@@ -160,14 +153,14 @@ CppApplication {
         }
     }
 
-    property string compilerPath: arduinoPath+arduinobuild.compilerPath
-    property string corePath: arduinoPath+arduinobuild.corePath
-    property string coreLibrariesPath: arduinoPath+arduinobuild.coreLibrariesPath
+    //property string compilerPath: qarduino.compilerPath
+    property string corePath: qarduino.corePath
+    property string coreLibrariesPath: qarduino.coreLibrariesPath
 
     property pathList coreIncludePaths: {
         var l = []
-        for (var i = 0; i < arduinobuild.coreIncludePaths.length; i++) {
-            l = l.concat(arduinoPath+arduinobuild.coreIncludePaths[i])
+        for (var i = 0; i < qarduino.coreIncludePaths.length; i++) {
+            l = l.concat(qarduino.coreIncludePaths[i])
         }
         return l
     }
@@ -175,21 +168,21 @@ CppApplication {
 
     // Warn for invalid paths
     property bool compilerPathExists: {
-        if (!File.exists(compilerPath)) {
+        if (!File.exists(qarduino.compilerPath)) {
             console.warn("Arduino path may be wrong (compiler path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
         return true
     }
     property bool corePathExists: {
-        if (!File.exists(corePath)) {
+        if (!File.exists(qarduino.corePath)) {
             console.warn("Arduino path may be wrong (core path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
         return true
     }
     property bool coreLibrariesPathExists: {
-        if (!File.exists(coreLibrariesPath)) {
+        if (!File.exists(qarduino.coreLibrariesPath)) {
             console.warn("Arduino path may be wrong (core libraries path is invalid), please check or set 'customArduinoPath' to the 'Java' folder in your Arduino install.")
             return false
         }
@@ -205,32 +198,12 @@ CppApplication {
     property string externalLibrariesPath_abs: FileInfo.isAbsolutePath(externalLibrariesPath) ? externalLibrariesPath : projectPath+"/"+externalLibrariesPath
 
 
-    // Time
-    property string time_utc: {
-        var lt = Helpers.getTimes()
-        return lt["utc"].toString()
-    }
+    // Times
+    qarduino.time_utc: Helpers.getTime("utc")
+    qarduino.time_local: Helpers.getTime("local")
+    qarduino.time_zone: Helpers.getTime("zone")
+    qarduino.time_dst: Helpers.getTime("dst")
 
-    property string time_local: {
-        var lt = Helpers.getTimes()
-        return lt["local"].toString()
-    }
-
-    property string time_zone: {
-        var lt = Helpers.getTimes()
-        return lt["zone"].toString()
-    }
-
-    property string time_dst: {
-        var lt = Helpers.getTimes()
-        return lt["dst"].toString()
-    }
-
-
-    property string fcpu: frequency+"000000L"
-
-
-    //cpp.cxxLanguageVersion: "c++11"
 
     property pathList includePaths: []
 

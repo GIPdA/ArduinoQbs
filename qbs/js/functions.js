@@ -17,6 +17,11 @@ function getTimes()
         "dst":daylight.toFixed()}
 }
 
+function getTime(key)
+{
+    return getTimes()[key].toString()
+}
+
 
 // Lib helpers
 function isCoreLibrary(libName, rootApp)
