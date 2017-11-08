@@ -23,7 +23,7 @@ Things you loose at the moment are the easy board selector, the integrated libra
 
 Compilation and upload should work on all Arduino-supported platforms, but only macOS has been tested yet (defaults paths to Arduino resources on other platforms than macOS are still to be validated).
 
-**Upload may not work under Windows due to the current use of scripts, this is on the todo list.**
+**Upload will not work under Windows due to the current use of scripts, this is on the todo list.**
 
 
 ## Requirements
@@ -71,7 +71,10 @@ For each project you add:
 
 #### 1. Copy repo content
 
-Download the repo, it is the base project. Rename the folder to your convenience, as well as the ```ArduinoQbs.qbs``` and ```Arduino.cpp``` files.
+Download the repo, it is the base project. Rename the folder to your convenience, as well as the ```ArduinoQbs.qbs``` file.
+
+Only the ```qbs``` folder is needed, folders ```qtcreator``` and ```templates``` are future developments and are not needed for your project, you can delete them.
+
 
 #### 2. Open in Qt Creator
 
@@ -79,7 +82,7 @@ Open what was ```ArduinoQbs.qbs``` in Qt Creator to add the project to your curr
 
 - the list of source files: ```files```
 - the board name: ```board```
-- the frequency used (if needed, mainly for Teensy): ```frequency```
+- (option) the frequency used (if needed, mainly for Teensy): ```frequency```. If not set, the default value for the board is used. You should not set it for boards that uses a fixed frequency (like most AVR boards), or you may encounter some issues (wrong timings mainly) if it doesn't match the CPU frequency.
 
 
 #### 3. Select the appropriate Kit
@@ -100,11 +103,15 @@ With that you will be able to hit "Run" to upload your code, using avrdude for A
 Happy coding :)
 
 
+## Side notes
+Don't forget to set/change the compiler according to the board you selected. You might get some weird error/warning messages otherwise...
+
+Still in beta version, everything could change without notice... I plan to integrate this project into QBS & QtCreator when possible (waiting for Windows support, mainly...).
 
 --
 ##### TODO list:
 - Test under Windows and Linux,
 - Add all AVR boards,
-- Qt Creator plugin for project wizard,
-- Qt Creator plugin for missing features (board selector, serial console)
+- Qt Creator template for project wizard (in progress),
+- Qt Creator plugin for missing features (board selector, serial console) (in progress)
 

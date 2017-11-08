@@ -70,7 +70,7 @@ ArduinoBase {
 
         //TODO: check compiler and throw error if not compatible
 
-        cpp.architecture: "avr2"
+        cpp.architecture: "avr2" // TODO: not sure that's right, check (http://www.atmel.com/webdoc/avrlibcreferencemanual/using_tools_1using_avr_gcc_mach_opt.html)
         cpp.cFlags: ["-fno-fat-lto-objects"]
         cpp.cxxFlags: ["-fpermissive","-fno-threadsafe-statics","-felide-constructors"]
         cpp.assemblerFlags: ["-x","assembler-with-cpp"]
