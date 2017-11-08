@@ -3,25 +3,29 @@ import qbs.FileInfo
 import qbs.File
 import qbs.TextFile
 import qbs.Process
-import "qbs/js/functions.js" as Helpers
+import "functions.js" as Helpers
 
 CppApplication {
     id: rootApp
 
-    qbsSearchPaths: "qbs"
+    qbsSearchPaths: "../../../qbs"
     Depends { name: "qarduino" }
     // FIXME: Why "qarduino"? => Workaround for bug QBS-1240. Maybe change back to "arduino" when fixed.
 
-    // TODO: add uploads to the qarduino module
-
     // Teensy board refs: teensy30, 31, 32, 35, 36, LC
     // AVR board refs: <todo>
-    property string board: "undefined"
+    property string board
     PropertyOptions {
         name: "board"
         description: "The Arduino board name to compile for."
     }
-    qarduino.boardName: board
+    qarduino.boardName: {
+        if (!board) {
+            console.error("Board name is not defined!")
+            throw ("Board name is not defined!")
+        }
+        return board
+    }
 
 
     /* #### Build Configuration Guide ####
@@ -60,7 +64,8 @@ CppApplication {
     // Note: o = overclock
     //*/
     // CPU clock in MHz
-    property string frequency: qarduino.frequency
+    property string frequency
+    qarduino.frequency: frequency ? frequency : original
 
 
     /* #### USB (Teensy) ####
@@ -81,7 +86,7 @@ CppApplication {
     // No USB                               USB_DISABLED
     //*/
     property string usbType: "USB_SERIAL"
-    qarduino.usbType: usbType
+    qarduino.usbType: usbType ? usbType : orginal
 
 
     /* #### KEYBOARD (Teensy) ####
@@ -112,7 +117,7 @@ CppApplication {
     // usint  US International         US_INTERNATIONAL
     //*/
     property string keyLayout: "FRENCH"
-    qarduino.keyLayout: keyLayout
+    qarduino.keyLayout: keyLayout ? keyLayout : orginal
 
 
     //cpp.debugInformation: true

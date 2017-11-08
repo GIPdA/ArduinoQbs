@@ -1,22 +1,23 @@
 import qbs
+import "qbs/imports/arduino/ArduinoApplication.qbs" as ArduinoApplication
 
 ArduinoApplication
 {
     // Don't forget to change the compiler accordingly if you change board architecture (i.e. avr/teensy) !
 
-    //board: "teensy30"    // Board Ref: 30, 31, 35, 36, LC
-    //frequency: "48" // CPU Frequency in MHz
+    board: "teensy32"    // Board Ref: 30, 31, 35, 36, LC
+    frequency: "96" // CPU Frequency in MHz
 
-    board: "pro5Vatmega328p"
+    //board: "pro5Vatmega328p"
 
     serialport: "/dev/cu.usbmodem1411"
 
-    usbType: "USB_SERIAL" // USB_RAWHID
+    //usbType: "USB_SERIAL" // USB_RAWHID
     //keyLayout: "FRENCH"
 
 
     files: [ // List of source files (c, cpp, headers)
-        "ArduinoQbs.cpp"
+        "main.cpp"
     ]
 
     // Other include paths

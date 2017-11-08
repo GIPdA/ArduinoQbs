@@ -9,8 +9,8 @@ ArduinoCore {
         if (boardName === "teensy31" || boardName === "teensy32") return "mk20dx256"
         if (boardName === "teensy35") return "mk64fx512"
         if (boardName === "teensy36") return "mk66fx1m0"
-        if (boardName === "pro5V") return "atmega328p"
-        if (boardName === "pro3V3") return "atmega328p"
+        if (boardName === "pro5Vatmega328p") return "atmega328p"
+        if (boardName === "pro3V3atmega328p") return "atmega328p"
     }
 
     Properties {
