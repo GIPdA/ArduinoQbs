@@ -5,7 +5,7 @@
 #include <QVBoxLayout>
 #include <QScrollBar>
 
-#include "serialterminalconstants.h"
+#include "constants.h"
 
 namespace SerialTerminal {
 namespace Internal {

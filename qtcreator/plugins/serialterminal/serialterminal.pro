@@ -10,16 +10,18 @@ SOURCES += serialterminalplugin.cpp \
     serialoutputpane.cpp \
     serialdevicemodel.cpp \
     combobox.cpp \
-    settings.cpp
+    settings.cpp \
+    serialconfiguration.cpp
 
 HEADERS += serialterminalplugin.h \
         serialterminal_global.h \
-        serialterminalconstants.h \
+        constants.h \
     serialview.h \
     serialoutputpane.h \
     serialdevicemodel.h \
     combobox.h \
-    settings.h
+    settings.h \
+    serialconfiguration.h
 
 # Qt Creator linking
 

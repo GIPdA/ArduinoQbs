@@ -1,6 +1,6 @@
 
 #include "settings.h"
-#include "serialterminalconstants.h"
+#include "constants.h"
 
 //#include <coreplugin/coreconstants.h>
 //#include <utils/theme/theme.h>

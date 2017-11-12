@@ -25,5 +25,8 @@ const char MENU_ID[] = "SerialTerminal.Menu";
 const int RECONNECT_DELAY = 1500; // milliseconds
 const int RESET_DELAY = 100; // milliseconds
 
+// Context
+const char C_SERIAL_OUTPUT[]         = "SerialTerminal.SerialOutput";
+
 } // namespace SerialTerminal
 } // namespace Constants

@@ -1,5 +1,5 @@
 #include "serialterminalplugin.h"
-#include "serialterminalconstants.h"
+#include "constants.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>
@@ -12,6 +12,8 @@
 #include <QMessageBox>
 #include <QMainWindow>
 #include <QMenu>
+
+#include "serialconfiguration.h"
 
 namespace SerialTerminal {
 namespace Internal {
@@ -55,6 +57,10 @@ bool SerialTerminalPlugin::initialize(const QStringList &arguments, QString *err
     // Create serial output pane
     m_serialOutputPane = new SerialOutputPane(m_settings);
     addAutoReleasedObject(m_serialOutputPane);
+
+//    auto rc = new SerialControl(m_settings);
+//    rc->setPortName("tty.usbmodem-2736");
+//    m_serialOutputPane->createNewOutputWindow(rc);
 
     return true;
 }

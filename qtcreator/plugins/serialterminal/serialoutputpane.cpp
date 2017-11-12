@@ -1,5 +1,6 @@
 #include "serialoutputpane.h"
-#include "serialterminalconstants.h"
+#include "constants.h"
+#include "serialconfiguration.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>
@@ -7,10 +8,14 @@
 #include <coreplugin/actionmanager/command.h>
 #include <coreplugin/actionmanager/actioncontainer.h>
 #include <coreplugin/coreconstants.h>
+#include <coreplugin/outputwindow.h>
 
 #include <utils/icon.h>
 #include <utils/theme/theme.h>
 #include <utils/utilsicons.h>
+#include <utils/qtcassert.h>
+#include <utils/algorithm.h>
+#include <utils/outputformatter.h>
 
 #include <QtGlobal>
 #include <QDebug>
@@ -18,38 +23,145 @@
 #include <QMenu>
 #include <QToolButton>
 #include <QComboBox>
+#include <QTabBar>
+#include <QVBoxLayout>
+
+enum { debug = 1 };
 
 namespace SerialTerminal {
 namespace Internal {
 
+class TabWidget : public QTabWidget
+{
+    Q_OBJECT
+public:
+    TabWidget(QWidget *parent = nullptr);
+signals:
+    void contextMenuRequested(const QPoint &pos, int index);
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override;
+private:
+    void slotContextMenuRequested(const QPoint &pos);
+    int m_tabIndexForMiddleClick {-1};
+};
+
+
+TabWidget::TabWidget(QWidget *parent) :
+    QTabWidget(parent)
+{
+    tabBar()->installEventFilter(this);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested,
+            this, &TabWidget::slotContextMenuRequested);
+}
+
+bool TabWidget::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == tabBar()) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::MiddleButton) {
+                m_tabIndexForMiddleClick = tabBar()->tabAt(me->pos());
+                event->accept();
+                return true;
+            }
+        } else if (event->type() == QEvent::MouseButtonRelease) {
+            QMouseEvent *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::MiddleButton) {
+                int tab = tabBar()->tabAt(me->pos());
+                if (tab != -1 && tab == m_tabIndexForMiddleClick)
+                    emit tabCloseRequested(tab);
+                m_tabIndexForMiddleClick = -1;
+                event->accept();
+                return true;
+            }
+        }
+    }
+    return QTabWidget::eventFilter(object, event);
+}
+
+void TabWidget::slotContextMenuRequested(const QPoint &pos)
+{
+    emit contextMenuRequested(pos, tabBar()->tabAt(pos));
+}
+
+
+
+SerialOutputPane::SerialControlTab::SerialControlTab(SerialControl* serialControl, Core::OutputWindow* w) :
+    serialControl(serialControl), window(w)
+{}
+
+
 SerialOutputPane::SerialOutputPane(Settings &settings) :
-    m_terminalView(new SerialView(settings))
+    m_mainWidget(new QWidget),
+    m_tabWidget(new TabWidget),
+    m_settings(settings),
+    m_terminalView(new SerialView(settings)),
+    m_devicesModel(new SerialDeviceModel),
+    m_closeCurrentTabAction(new QAction(tr("Close Tab"), this)),
+    m_closeAllTabsAction(new QAction(tr("Close All Tabs"), this)),
+    m_closeOtherTabsAction(new QAction(tr("Close Other Tabs"), this))
 {
     createToolButtons();
 
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setMargin(0);
+    m_tabWidget->setDocumentMode(true);
+    m_tabWidget->setTabsClosable(true);
+    m_tabWidget->setMovable(true);
+    connect(m_tabWidget, &QTabWidget::tabCloseRequested,
+            this, [this](int index) { closeTab(index); });
+    layout->addWidget(m_tabWidget);
+
+    connect(m_tabWidget, &QTabWidget::currentChanged, this, &SerialOutputPane::tabChanged);
+    connect(m_tabWidget, &TabWidget::contextMenuRequested,
+            this, &SerialOutputPane::contextMenuRequested);
+
+    m_mainWidget->setLayout(layout);
+
+//    connect(TextEditor::TextEditorSettings::instance(), &TextEditor::TextEditorSettings::fontSettingsChanged,
+//            this, &SerialOutputPane::updateFontSettings);
+
+//    connect(TextEditor::TextEditorSettings::instance(), &TextEditor::TextEditorSettings::behaviorSettingsChanged,
+//            this, &SerialOutputPane::updateBehaviorSettings);
+
+//    connect(ProjectExplorer::SessionManager::instance(), &SessionManager::aboutToUnloadSession,
+//            this, &SerialOutputPane::aboutToUnloadSession);
+//    connect(ProjectExplorerPlugin::instance(), &ProjectExplorerPlugin::settingsChanged,
+//            this, &SerialOutputPane::updateFromSettings);
+
+#ifdef Q_OS_WIN
+//    connect(this, &SerialOutputPane::allRunControlsFinished,
+//            WinDebugInterface::instance(), &WinDebugInterface::stop);
+#endif
+
+//    QSettings *settings = Core::ICore::settings();
+//    m_zoom = settings->value(QLatin1String(SETTINGS_KEY), 0).toFloat();
+
+//    connect(Core::ICore::instance(), &Core::ICore::saveSettingsRequested,
+//            this, &SerialOutputPane::saveSettings);
+
     connect(m_terminalView, &SerialView::connectedChanged, this, &SerialOutputPane::connectedChanged);
+
+    enableDefaultButtons();
 }
 
 SerialOutputPane::~SerialOutputPane()
 {
     // Unregister objects from the plugin manager's object pool
     // Delete members
+    delete m_mainWidget;
 }
 
 QWidget* SerialOutputPane::outputWidget(QWidget* parent)
 {
-    m_terminalView->setParent(parent);
-    return m_terminalView;
+    Q_UNUSED(parent)
+    return m_mainWidget;
 }
 
 QList<QWidget*> SerialOutputPane::toolBarWidgets() const
 {
-    QWidgetList widgets;
-
-    widgets << m_connectButton << m_disconnectButton << m_resetButton
-            << m_portsSelection << m_baudRateSelection;
-
-    return widgets;
+    return { m_connectButton, m_disconnectButton, m_resetButton, m_portsSelection, m_baudRateSelection };
 }
 
 
@@ -60,32 +172,39 @@ QString SerialOutputPane::displayName() const
 
 int SerialOutputPane::priorityInStatusBar() const
 {
-    return 10;
+    return 30;
 }
 
 void SerialOutputPane::clearContents()
 {
-    m_terminalView->clearContent();
+    Core::OutputWindow *currentWindow = qobject_cast<Core::OutputWindow *>(m_tabWidget->currentWidget());
+    if (currentWindow)
+        currentWindow->clear();
+
+    //m_terminalView->clearContent();
 }
 
 void SerialOutputPane::visibilityChanged(bool)
 {
-    //
 }
 
 bool SerialOutputPane::canFocus() const
 {
-    return true;
+    return m_tabWidget->currentWidget();
 }
 
 bool SerialOutputPane::hasFocus() const
 {
-    return false;// TODO
+    QWidget *widget = m_tabWidget->currentWidget();
+    if (!widget)
+        return false;
+    return widget->window()->focusWidget() == widget;
 }
 
 void SerialOutputPane::setFocus()
 {
-    //
+    if (m_tabWidget->currentWidget())
+        m_tabWidget->currentWidget()->setFocus();
 }
 
 bool SerialOutputPane::canNext() const
@@ -113,10 +232,108 @@ bool SerialOutputPane::canNavigate() const
     return false;
 }
 
+
+void SerialOutputPane::appendMessage(SerialControl *rc, const QString &out, Utils::OutputFormat format)
+{
+    const int index = indexOf(rc);
+    if (index != -1) {
+        Core::OutputWindow *window = m_serialControlTabs.at(index).window;
+        window->appendMessage(out, format);
+        if (format != Utils::NormalMessageFormat) {
+            if (m_serialControlTabs.at(index).behaviorOnOutput == Flash)
+                flash();
+            else
+                popup(NoModeSwitch);
+        }
+    }
+}
+
+
+void SerialOutputPane::createNewOutputWindow(SerialControl *rc)
+{
+    connect(rc, &SerialControl::started,
+            this, &SerialOutputPane::slotSerialControlStarted);
+    connect(rc, &SerialControl::finished,
+            this, &SerialOutputPane::slotSerialControlFinished);
+
+//    connect(rc, &SerialControl::applicationProcessHandleChanged,
+//            this, &SerialOutputPane::enableDefaultButtons);
+
+    connect(rc, &SerialControl::appendMessageRequested,
+            this, &SerialOutputPane::appendMessage);
+
+    Utils::OutputFormatter *formatter = rc->outputFormatter();
+
+    // First look if we can reuse a tab
+    const int tabIndex = Utils::indexOf(m_serialControlTabs, [rc](const SerialControlTab &tab) {
+        return rc->canReUseOutputPane(tab.serialControl);
+    });
+
+    if (tabIndex != -1) {
+        SerialControlTab &tab = m_serialControlTabs[tabIndex];
+        // Reuse this tab
+        delete tab.serialControl;
+        tab.serialControl = rc;
+        handleOldOutput(tab.window);
+        tab.window->scrollToBottom();
+        tab.window->setFormatter(formatter);
+        if (debug)
+            qDebug() << "OutputPane::createNewOutputWindow: Reusing tab" << tabIndex << " for " << rc;
+        return;
+    }
+
+    // Create new
+    static uint counter = 0;
+    Core::Id contextId = Core::Id(Constants::C_SERIAL_OUTPUT).withSuffix(counter++);
+    Core::Context context(contextId);
+    Core::OutputWindow *ow = new Core::OutputWindow(context, m_tabWidget);
+    ow->setWindowTitle(tr("Application Output Window"));
+//    ow->setWindowIcon(Icons::WINDOW.icon());
+    ow->setFormatter(formatter);
+//    ow->setWordWrapEnabled(ProjectExplorerPlugin::projectExplorerSettings().wrapAppOutput);
+//    ow->setMaxLineCount(ProjectExplorerPlugin::projectExplorerSettings().maxAppOutputLines);
+//    ow->setWheelZoomEnabled(TextEditor::TextEditorSettings::behaviorSettings().m_scrollWheelZooming);
+//    ow->setBaseFont(TextEditor::TextEditorSettings::fontSettings().font());
+//    ow->setFontZoom(m_zoom);
+
+    /*connect(ow, &Core::OutputWindow::wheelZoom, this, [this, ow]() {
+        m_zoom = ow->fontZoom();
+        foreach (const RunControlTab &tab, m_runControlTabs)
+            tab.window->setFontZoom(m_zoom);
+    });//*/
+
+//    Aggregation::Aggregate *agg = new Aggregation::Aggregate;
+//    agg->add(ow);
+//    agg->add(new Core::BaseTextFind(ow));
+
+    m_serialControlTabs.push_back(SerialControlTab(rc, ow));
+    m_tabWidget->addTab(ow, rc->displayName());
+
+    if (debug)
+        qDebug() << "OutputPane::createNewOutputWindow: Adding tab for " << rc;
+
+    updateCloseActions();
+}
+
+
 void SerialOutputPane::close()
 {
     m_terminalView->close();
 }
+
+bool SerialOutputPane::closeTabs(CloseTabMode mode)
+{
+    bool allClosed = true;
+    for (int t = m_tabWidget->count() - 1; t >= 0; t--)
+        if (!closeTab(t, mode))
+            allClosed = false;
+
+    if (debug)
+        qDebug() << "OutputPane::closeTabs() returns " << allClosed;
+
+    return allClosed;
+}
+
 
 
 
@@ -166,8 +383,6 @@ void SerialOutputPane::createToolButtons()
 
 
 
-    m_devicesModel = new SerialDeviceModel;
-
     // Availbale devices box
     m_portsSelection = new ComboBox();
     m_portsSelection->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -189,51 +404,271 @@ void SerialOutputPane::createToolButtons()
     m_baudRateSelection->setCurrentIndex(m_devicesModel->indexForBaudRate(115200)); // TODO: add to settings, add fallback to 9600
 }
 
+int SerialOutputPane::indexOf(const SerialControl *rc) const
+{
+    for (int i = m_serialControlTabs.size() - 1; i >= 0; i--)
+        if (m_serialControlTabs.at(i).serialControl == rc)
+            return i;
+    return -1;
+}
+
+int SerialOutputPane::indexOf(const QWidget *outputWindow) const
+{
+    for (int i = m_serialControlTabs.size() - 1; i >= 0; i--)
+        if (m_serialControlTabs.at(i).window == outputWindow)
+            return i;
+    return -1;
+}
+
+int SerialOutputPane::currentIndex() const
+{
+    if (const QWidget *w = m_tabWidget->currentWidget())
+        return indexOf(w);
+    return -1;
+}
+
+SerialControl* SerialOutputPane::currentSerialControl() const
+{
+    const int index = currentIndex();
+    if (index != -1)
+        return m_serialControlTabs.at(index).serialControl;
+    return 0;
+}
+
+void SerialOutputPane::handleOldOutput(Core::OutputWindow *window) const
+{
+//    if (ProjectExplorerPlugin::projectExplorerSettings().cleanOldAppOutput)
+//        window->clear();
+//    else
+        window->grayOutOldContent();
+}
+
+void SerialOutputPane::updateCloseActions()
+{
+    const int tabCount = m_tabWidget->count();
+    m_closeCurrentTabAction->setEnabled(tabCount > 0);
+    m_closeAllTabsAction->setEnabled(tabCount > 0);
+    m_closeOtherTabsAction->setEnabled(tabCount > 1);
+}
+
+bool SerialOutputPane::closeTab(int tabIndex, CloseTabMode closeTabMode)
+{
+    int index = indexOf(m_tabWidget->widget(tabIndex));
+    QTC_ASSERT(index != -1, return true);
+    // TODO
+
+    if (debug)
+        qDebug() << "OutputPane::closeTab tab " << tabIndex << m_serialControlTabs[index].serialControl
+                        << m_serialControlTabs[index].window << m_serialControlTabs[index].asyncClosing;
+
+    // Prompt user to stop
+    if (m_serialControlTabs[index].serialControl->isRunning()) {
+        switch (closeTabMode) {
+        case CloseTabNoPrompt:
+            break;
+        case CloseTabWithPrompt:
+            // TODO: prompt to stop?
+            /*QWidget *tabWidget = m_tabWidget->widget(tabIndex);
+            if (!m_serialControlTabs[index].serialControl->promptToStop())
+                return false;
+            // The event loop has run, thus the ordering might have changed, a tab might
+            // have been closed, so do some strange things...
+            tabIndex = m_tabWidget->indexOf(tabWidget);
+            index = indexOf(tabWidget);
+            if (tabIndex == -1 || index == -1)
+                return false;//*/
+            break;
+        }
+
+        if (m_serialControlTabs[index].serialControl->isRunning()) { // yes it might have stopped already, then just close
+            QWidget *tabWidget = m_tabWidget->widget(tabIndex);
+            m_serialControlTabs[index].serialControl->stop();
+
+            tabIndex = m_tabWidget->indexOf(tabWidget);
+            index = indexOf(tabWidget);
+            if (tabIndex == -1 || index == -1)
+                return false;
+        }
+    }
+
+    m_tabWidget->removeTab(tabIndex);
+    delete m_serialControlTabs[index].serialControl;
+    delete m_serialControlTabs[index].window;
+    m_serialControlTabs.removeAt(index);
+    updateCloseActions();
+
+    if (m_serialControlTabs.isEmpty())
+        hide();
+
+    return true;
+}
+
+
+void SerialOutputPane::contextMenuRequested(const QPoint &pos, int index)
+{
+    QList<QAction *> actions { m_closeCurrentTabAction, m_closeAllTabsAction, m_closeOtherTabsAction };
+
+    QAction *action = QMenu::exec(actions, m_tabWidget->mapToGlobal(pos), 0, m_tabWidget);
+    const int currentIdx = index != -1 ? index : currentIndex();
+
+    if (action == m_closeCurrentTabAction) {
+        if (currentIdx >= 0)
+            closeTab(currentIdx);
+    } else if (action == m_closeAllTabsAction) {
+        closeTabs(SerialOutputPane::CloseTabWithPrompt);
+    } else if (action == m_closeOtherTabsAction) {
+        for (int t = m_tabWidget->count() - 1; t >= 0; t--)
+            if (t != currentIdx)
+                closeTab(t);
+    }
+}
+
+
+void SerialOutputPane::enableDefaultButtons()
+{
+    const auto* rc = currentSerialControl();
+    const bool isRunning = rc && rc->isRunning();
+    enableButtons(rc, isRunning);
+}
+
+void SerialOutputPane::enableButtons(const SerialControl *rc, bool isRunning)
+{
+    if (rc) {
+        m_connectButton->setEnabled(!isRunning);
+        m_disconnectButton->setEnabled(isRunning);
+        m_resetButton->setEnabled(isRunning);
+
+        m_portsSelection->setEnabled(!isRunning);
+        m_baudRateSelection->setEnabled(!isRunning);
+
+//        m_zoomInButton->setEnabled(true);
+//        m_zoomOutButton->setEnabled(true);
+    } else {
+        m_connectButton->setEnabled(true);
+        m_disconnectButton->setEnabled(false);
+
+        m_portsSelection->setEnabled(true);
+        m_baudRateSelection->setEnabled(true);
+
+//        m_zoomInButton->setEnabled(false);
+//        m_zoomOutButton->setEnabled(false);
+    }
+}
+
+void SerialOutputPane::tabChanged(int i)
+{
+    const int index = indexOf(m_tabWidget->widget(i));
+    if (i != -1 && index != -1) {
+        const auto* rc = m_serialControlTabs.at(index).serialControl;
+        enableButtons(rc, rc->isRunning());
+    } else {
+        enableDefaultButtons();
+    }
+}
+
+
+void SerialOutputPane::slotSerialControlStarted()
+{
+    SerialControl *current = currentSerialControl();
+    if (current && current == sender())
+        enableButtons(current, true); // RunControl::isRunning() cannot be trusted in signal handler.
+    //emit runControlStarted(current);
+}
+
+void SerialOutputPane::slotSerialControlFinished()
+{
+    SerialControl *rc = qobject_cast<SerialControl*>(sender());
+    QTimer::singleShot(0, this, [this, rc]() { slotSerialControlFinished2(rc); });
+    rc->outputFormatter()->flush();
+}
+
+void SerialOutputPane::slotSerialControlFinished2(SerialControl* sender)
+{
+    const int senderIndex = indexOf(sender);
+
+    // This slot is queued, so the stop() call in closeTab might lead to this slot, after closeTab already cleaned up
+    if (senderIndex == -1)
+        return;
+
+    // Enable buttons for current
+    SerialControl *current = currentSerialControl();
+
+    if (debug)
+        qDebug() << "OutputPane::runControlFinished"  << sender << senderIndex
+                    << " current " << current << m_serialControlTabs.size();
+
+    if (current && current == sender)
+        enableButtons(current, false); // RunControl::isRunning() cannot be trusted in signal handler.
+
+    //emit runControlFinished(sender);
+
+//    if (!isRunning())
+//        emit allRunControlsFinished();
+}
+
+bool SerialOutputPane::isRunning() const
+{
+    return Utils::anyOf(m_serialControlTabs, [](const SerialControlTab &rt) {
+        return rt.serialControl->isRunning();
+    });
+}
+
 void SerialOutputPane::setCurrentDevice(int index)
 {
-    if (index == 0) {
-        m_terminalView->setPortName("");
-        return;
+    SerialControl *current = currentSerialControl();
+    if (current) {
+        qDebug() << "Set port to" << index << m_devicesModel->portName(index);
+        current->setPortName(m_devicesModel->portName(index));
     }
-    qDebug() << "Set port to" << index << m_devicesModel->portName(index);
-
-    m_terminalView->setPortName(m_devicesModel->portName(index));
-    m_connectButton->setEnabled(true);
 }
 
 
 void SerialOutputPane::connectControl()
 {
-    qDebug() << "Connect to" << m_terminalView->portName();
-
-    if (m_terminalView->open()) {
-        qDebug("Connected.");
-        // TODO: reset on connect (setting)
+    SerialControl *current = currentSerialControl();
+    if (current) {
+        qDebug() << "Connect to" << current->portName();
+        current->start();
     } else {
-        qDebug("Connection failed.");
+        auto rc = new SerialControl(m_settings);
+        auto currentPortName = m_devicesModel->portName(m_portsSelection->currentIndex());
+        rc->setPortName(currentPortName);
+        createNewOutputWindow(rc);
+
+        qDebug() << "Create and connect to" << rc->portName();
+
+        rc->start();
     }
 }
 
 void SerialOutputPane::disconnectControl()
 {
-    m_terminalView->close();
-    qDebug("Disconnected.");
+    SerialControl *current = currentSerialControl();
+    if (current) {
+        current->stop();
+        qDebug("Disconnected.");
+    }
 }
 
 void SerialOutputPane::resetControl()
 {
-    m_terminalView->pulseDTR();
+    SerialControl *current = currentSerialControl();
+    if (current) {
+        current->pulseDTR();
+    }
 }
 
 void SerialOutputPane::connectedChanged(bool connected)
 {
-    m_disconnectButton->setEnabled(connected);
+    /*m_disconnectButton->setEnabled(connected);
     m_connectButton->setEnabled(!connected);
     m_resetButton->setEnabled(connected);
 
     m_portsSelection->setEnabled(!connected);
-    m_baudRateSelection->setEnabled(!connected);
+    m_baudRateSelection->setEnabled(!connected);//*/
 }
 
 } // namespace Internal
 } // namespace SerialTerminal
+
+#include "serialoutputpane.moc"
