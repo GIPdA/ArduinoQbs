@@ -6,7 +6,6 @@ CONFIG += c++11
 # SerialTerminal files
 
 SOURCES += serialterminalplugin.cpp \
-    serialview.cpp \
     serialoutputpane.cpp \
     serialdevicemodel.cpp \
     combobox.cpp \
@@ -16,7 +15,6 @@ SOURCES += serialterminalplugin.cpp \
 HEADERS += serialterminalplugin.h \
         serialterminal_global.h \
         constants.h \
-    serialview.h \
     serialoutputpane.h \
     serialdevicemodel.h \
     combobox.h \

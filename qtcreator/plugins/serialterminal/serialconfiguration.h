@@ -48,6 +48,7 @@ public:
 
     qint32 baudRate() const;
     void setBaudRate(qint32 baudRate);
+    QString baudRateText() const;
 
     void pulseDTR();
 

@@ -39,6 +39,25 @@ int SerialDeviceModel::indexForBaudRate(qint32 baudRate) const
     return m_baudRates.indexOf(baudRate);
 }
 
+void SerialDeviceModel::disablePort(const QString& portName)
+{
+    m_disabledPorts.insert(portName);
+
+    int i {0};
+    for (const auto& p : m_ports) {
+        if (p.portName() == portName) {
+            emit dataChanged(index(i), index(i), {Qt::DisplayRole});
+            break;
+        }
+        ++i;
+    }
+}
+
+void SerialDeviceModel::enablePort(const QString& portName)
+{
+    m_disabledPorts.remove(portName);
+}
+
 
 void SerialDeviceModel::update()
 {
@@ -59,6 +78,7 @@ void SerialDeviceModel::update()
 
     // Filter the list
     decltype(m_ports) newPorts;
+    newPorts.reserve(serialPortInfos.size());
     for (const auto& serialPortInfo : serialPortInfos) {
         //auto description = serialPortInfo.description();
         //auto manufacturer = serialPortInfo.manufacturer();
@@ -88,6 +108,18 @@ void SerialDeviceModel::update()
     }
 
     emit dataChanged(index(0), index(m_ports.size()-1));
+}
+
+Qt::ItemFlags SerialDeviceModel::flags(const QModelIndex& index) const
+{
+    auto f = QAbstractListModel::flags(index);
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_ports.size())
+        return f;
+
+    if (m_disabledPorts.contains(m_ports.at(index.row()).portName())) {
+        f &= ~Qt::ItemIsEnabled;
+    }
+    return f;
 }
 
 int SerialDeviceModel::rowCount(const QModelIndex& parent) const

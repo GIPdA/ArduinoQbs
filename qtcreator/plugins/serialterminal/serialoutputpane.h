@@ -5,7 +5,6 @@
 #include <coreplugin/ioutputpane.h>
 #include <utils/outputformat.h>
 
-#include "serialview.h"
 #include "serialdevicemodel.h"
 #include "combobox.h"
 #include "settings.h"
@@ -65,8 +64,6 @@ public:
 
     void createNewOutputWindow(SerialControl *rc);
 
-    void close();
-
     bool closeTabs(CloseTabMode mode);
 
     void appendMessage(SerialControl *rc, const QString &out, Utils::OutputFormat format);
@@ -98,18 +95,21 @@ private:
 
     bool isRunning() const;
 
-    void setCurrentDevice(int index);
+    void activePortNameChanged(int index);
+    void activeBaudRateChanged(int index);
 
     void connectControl();
     void disconnectControl();
     void resetControl();
-    void connectedChanged(bool connected);
+    void openNewTerminalControl();
 
     bool closeTab(int index, CloseTabMode cm = CloseTabWithPrompt);
     int indexOf(const SerialControl *rc) const;
     int indexOf(const QWidget *outputWindow) const;
     int currentIndex() const;
     SerialControl* currentSerialControl() const;
+    int findTabWithPort(QString const& portName) const;
+    int findRunningTabWithPort(const QString& portName) const;
     void handleOldOutput(Core::OutputWindow *window) const;
 
     void updateCloseActions();
@@ -120,7 +120,6 @@ private:
     Settings m_settings;
     QVector<SerialControlTab> m_serialControlTabs;
 
-    SerialView* m_terminalView {nullptr};
     SerialDeviceModel* m_devicesModel {nullptr};
 
     QAction* m_closeCurrentTabAction {nullptr};
@@ -131,6 +130,7 @@ private:
     QToolButton* m_connectButton {nullptr};
     QToolButton* m_disconnectButton {nullptr};
     QToolButton* m_resetButton {nullptr};
+    QToolButton* m_newButton {nullptr};
     ComboBox* m_portsSelection {nullptr};
     ComboBox* m_baudRateSelection {nullptr};
 };

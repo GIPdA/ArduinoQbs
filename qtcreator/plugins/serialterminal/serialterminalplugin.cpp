@@ -74,7 +74,7 @@ void SerialTerminalPlugin::extensionsInitialized()
 
 ExtensionSystem::IPlugin::ShutdownFlag SerialTerminalPlugin::aboutToShutdown()
 {
-    m_serialOutputPane->close();
+    m_serialOutputPane->closeTabs(SerialOutputPane::CloseTabNoPrompt);
 
     // Disconnect from signals that are not needed during shutdown
     // Hide UI (if you add UI that is not in the main window directly)

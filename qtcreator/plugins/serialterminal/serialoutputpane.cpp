@@ -96,7 +96,6 @@ SerialOutputPane::SerialOutputPane(Settings &settings) :
     m_mainWidget(new QWidget),
     m_tabWidget(new TabWidget),
     m_settings(settings),
-    m_terminalView(new SerialView(settings)),
     m_devicesModel(new SerialDeviceModel),
     m_closeCurrentTabAction(new QAction(tr("Close Tab"), this)),
     m_closeAllTabsAction(new QAction(tr("Close All Tabs"), this)),
@@ -141,8 +140,6 @@ SerialOutputPane::SerialOutputPane(Settings &settings) :
 //    connect(Core::ICore::instance(), &Core::ICore::saveSettingsRequested,
 //            this, &SerialOutputPane::saveSettings);
 
-    connect(m_terminalView, &SerialView::connectedChanged, this, &SerialOutputPane::connectedChanged);
-
     enableDefaultButtons();
 }
 
@@ -161,7 +158,7 @@ QWidget* SerialOutputPane::outputWidget(QWidget* parent)
 
 QList<QWidget*> SerialOutputPane::toolBarWidgets() const
 {
-    return { m_connectButton, m_disconnectButton, m_resetButton, m_portsSelection, m_baudRateSelection };
+    return { m_connectButton, m_disconnectButton, m_resetButton, m_portsSelection, m_baudRateSelection, m_newButton };
 }
 
 
@@ -180,8 +177,6 @@ void SerialOutputPane::clearContents()
     Core::OutputWindow *currentWindow = qobject_cast<Core::OutputWindow *>(m_tabWidget->currentWidget());
     if (currentWindow)
         currentWindow->clear();
-
-    //m_terminalView->clearContent();
 }
 
 void SerialOutputPane::visibilityChanged(bool)
@@ -265,7 +260,7 @@ void SerialOutputPane::createNewOutputWindow(SerialControl *rc)
     Utils::OutputFormatter *formatter = rc->outputFormatter();
 
     // First look if we can reuse a tab
-    const int tabIndex = Utils::indexOf(m_serialControlTabs, [rc](const SerialControlTab &tab) {
+    /*const int tabIndex = Utils::indexOf(m_serialControlTabs, [rc](const SerialControlTab &tab) {
         return rc->canReUseOutputPane(tab.serialControl);
     });
 
@@ -280,7 +275,7 @@ void SerialOutputPane::createNewOutputWindow(SerialControl *rc)
         if (debug)
             qDebug() << "OutputPane::createNewOutputWindow: Reusing tab" << tabIndex << " for " << rc;
         return;
-    }
+    }//*/
 
     // Create new
     static uint counter = 0;
@@ -315,11 +310,6 @@ void SerialOutputPane::createNewOutputWindow(SerialControl *rc)
     updateCloseActions();
 }
 
-
-void SerialOutputPane::close()
-{
-    m_terminalView->close();
-}
 
 bool SerialOutputPane::closeTabs(CloseTabMode mode)
 {
@@ -381,25 +371,29 @@ void SerialOutputPane::createToolButtons()
     connect(m_resetButton, &QToolButton::clicked,
             this, &SerialOutputPane::resetControl);
 
+    // New terminal button
+    m_newButton = new QToolButton;
+    m_newButton->setIcon(Utils::Icons::PLUS_TOOLBAR.icon());
+    m_newButton->setToolTip(tr("Add new terminal"));
+    m_newButton->setAutoRaise(true);
+    m_newButton->setEnabled(true);
+
+    connect(m_newButton, &QToolButton::clicked,
+            this, &SerialOutputPane::openNewTerminalControl);
 
 
-    // Availbale devices box
+    // Available devices box
     m_portsSelection = new ComboBox();
     m_portsSelection->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_portsSelection->setModel(m_devicesModel);
     connect(m_portsSelection, &ComboBox::opened, m_devicesModel, &SerialDeviceModel::update);
-    connect(m_portsSelection, QOverload<int>::of(&ComboBox::currentIndexChanged), this, &SerialOutputPane::setCurrentDevice);
+    connect(m_portsSelection, QOverload<int>::of(&ComboBox::currentIndexChanged), this, &SerialOutputPane::activePortNameChanged);
 
     // Baud rates box
     m_baudRateSelection = new ComboBox();
     m_baudRateSelection->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_baudRateSelection->addItems(m_devicesModel->baudRates());
-
-    connect(m_baudRateSelection, QOverload<int>::of(&ComboBox::currentIndexChanged),
-            [=](int index) {
-        m_terminalView->setBaudRate(m_devicesModel->baudRate(index));
-    }
-    );
+    connect(m_baudRateSelection, QOverload<int>::of(&ComboBox::currentIndexChanged), this, &SerialOutputPane::activeBaudRateChanged);
 
     m_baudRateSelection->setCurrentIndex(m_devicesModel->indexForBaudRate(115200)); // TODO: add to settings, add fallback to 9600
 }
@@ -435,8 +429,30 @@ SerialControl* SerialOutputPane::currentSerialControl() const
     return 0;
 }
 
+int SerialOutputPane::findTabWithPort(const QString& portName) const
+{
+    for (int i {0}; i < m_serialControlTabs.size(); ++i) {
+        if (m_serialControlTabs.at(i).serialControl->portName() == portName) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int SerialOutputPane::findRunningTabWithPort(const QString& portName) const
+{
+    for (int i {0}; i < m_serialControlTabs.size(); ++i) {
+        if (m_serialControlTabs.at(i).serialControl->isRunning()
+                && m_serialControlTabs.at(i).serialControl->portName() == portName) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void SerialOutputPane::handleOldOutput(Core::OutputWindow *window) const
 {
+    // TODO: add to settings
 //    if (ProjectExplorerPlugin::projectExplorerSettings().cleanOldAppOutput)
 //        window->clear();
 //    else
@@ -560,6 +576,18 @@ void SerialOutputPane::tabChanged(int i)
     const int index = indexOf(m_tabWidget->widget(i));
     if (i != -1 && index != -1) {
         const auto* rc = m_serialControlTabs.at(index).serialControl;
+
+        // Update combobox index
+        m_portsSelection->blockSignals(true);
+        m_baudRateSelection->blockSignals(true);
+
+        m_portsSelection->setCurrentText(rc->portName());
+        m_baudRateSelection->setCurrentText(rc->baudRateText());
+
+        m_portsSelection->blockSignals(false);
+        m_baudRateSelection->blockSignals(false);
+
+        // Update buttons
         enableButtons(rc, rc->isRunning());
     } else {
         enableDefaultButtons();
@@ -613,32 +641,78 @@ bool SerialOutputPane::isRunning() const
     });
 }
 
-void SerialOutputPane::setCurrentDevice(int index)
+void SerialOutputPane::activePortNameChanged(int index)
 {
     SerialControl *current = currentSerialControl();
     if (current) {
-        qDebug() << "Set port to" << index << m_devicesModel->portName(index);
-        current->setPortName(m_devicesModel->portName(index));
+        auto pn = m_devicesModel->portName(index);
+        if (debug) qDebug() << "Set port to" << index << pn;
+        current->setPortName(pn);
+
+        // Update tab text
+        int tabIndex {indexOf(current)};
+        if (tabIndex >= 0)
+            m_tabWidget->setTabText(tabIndex, pn);
+    }
+}
+
+void SerialOutputPane::activeBaudRateChanged(int index)
+{
+    SerialControl *current = currentSerialControl();
+    if (current) {
+        auto br = m_devicesModel->baudRate(index);
+        if (debug) qDebug() << "Set baudrate to" << index << br;
+        current->setBaudRate(br);
     }
 }
 
 
 void SerialOutputPane::connectControl()
 {
+    auto currentPortName = m_devicesModel->portName(m_portsSelection->currentIndex());
+    if (currentPortName.isEmpty()) return;
+
     SerialControl *current = currentSerialControl();
+    const int index = currentIndex();
+    // MAYBE: use current->canReUseOutputPane(...)?
+
+    // Show tab if already opened and running
+    int i = findRunningTabWithPort(currentPortName);
+    if (i >= 0) {
+        m_tabWidget->setCurrentIndex(i);
+        if (debug)
+            qDebug() << "Port running in tab #" << i;
+        return;
+    }
+
     if (current) {
-        qDebug() << "Connect to" << current->portName();
-        current->start();
+        current->setPortName(currentPortName);
+        // Gray out old and connect
+        if (index != -1) {
+            auto& tab = m_serialControlTabs[index];
+            handleOldOutput(tab.window);
+            tab.window->scrollToBottom();
+        }
+        if (debug)
+            qDebug() << "Connect to" << current->portName();
     } else {
+        // Create a new window
         auto rc = new SerialControl(m_settings);
-        auto currentPortName = m_devicesModel->portName(m_portsSelection->currentIndex());
         rc->setPortName(currentPortName);
         createNewOutputWindow(rc);
 
-        qDebug() << "Create and connect to" << rc->portName();
+        if (debug)
+            qDebug() << "Create and connect to" << rc->portName();
 
-        rc->start();
+        current = rc;
     }
+
+    // Update tab text
+    if (index != -1) {
+        m_tabWidget->setTabText(index, current->portName());
+    }
+
+    current->start();
 }
 
 void SerialOutputPane::disconnectControl()
@@ -646,7 +720,8 @@ void SerialOutputPane::disconnectControl()
     SerialControl *current = currentSerialControl();
     if (current) {
         current->stop();
-        qDebug("Disconnected.");
+        if (debug)
+            qDebug("Disconnected.");
     }
 }
 
@@ -658,15 +733,19 @@ void SerialOutputPane::resetControl()
     }
 }
 
-void SerialOutputPane::connectedChanged(bool connected)
+void SerialOutputPane::openNewTerminalControl()
 {
-    /*m_disconnectButton->setEnabled(connected);
-    m_connectButton->setEnabled(!connected);
-    m_resetButton->setEnabled(connected);
+    auto currentPortName = m_devicesModel->portName(m_portsSelection->currentIndex());
+    if (currentPortName.isEmpty()) return;
 
-    m_portsSelection->setEnabled(!connected);
-    m_baudRateSelection->setEnabled(!connected);//*/
+    auto rc = new SerialControl(m_settings);
+    rc->setPortName(currentPortName);
+    createNewOutputWindow(rc);
+
+    if (debug)
+        qDebug() << "Created new terminal on" << rc->portName();
 }
+
 
 } // namespace Internal
 } // namespace SerialTerminal

@@ -113,6 +113,7 @@ QString SerialControl::portName() const
 
 void SerialControl::setPortName(const QString& name)
 {
+    if (m_serialPort->portName() == name) return;
     m_serialPort->setPortName(name);
 }
 
@@ -124,6 +125,11 @@ qint32 SerialControl::baudRate() const
 void SerialControl::setBaudRate(qint32 baudRate)
 {
     m_serialPort->setBaudRate(baudRate);
+}
+
+QString SerialControl::baudRateText() const
+{
+    return QString::number(baudRate());
 }
 
 void SerialControl::pulseDTR()
