@@ -140,6 +140,11 @@ void SerialControl::pulseDTR()
     });
 }
 
+qint64 SerialControl::writeData(const QByteArray& data)
+{
+    return m_serialPort->write(data);
+}
+
 void SerialControl::handleReadyRead()
 {
     auto qb = m_serialPort->readAll();

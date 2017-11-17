@@ -1,6 +1,7 @@
 #include "serialoutputpane.h"
 #include "constants.h"
 #include "serialconfiguration.h"
+#include "consolelineedit.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>
@@ -94,6 +95,7 @@ SerialOutputPane::SerialControlTab::SerialControlTab(SerialControl* serialContro
 
 SerialOutputPane::SerialOutputPane(Settings &settings) :
     m_mainWidget(new QWidget),
+    m_inputLine(new ConsoleLineEdit),
     m_tabWidget(new TabWidget),
     m_settings(settings),
     m_devicesModel(new SerialDeviceModel),
@@ -105,6 +107,9 @@ SerialOutputPane::SerialOutputPane(Settings &settings) :
 
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setMargin(0);
+    layout->setSpacing(0);
+    //layout->setContentsMargins(0, 0, 0, 2);
+
     m_tabWidget->setDocumentMode(true);
     m_tabWidget->setTabsClosable(true);
     m_tabWidget->setMovable(true);
@@ -115,6 +120,12 @@ SerialOutputPane::SerialOutputPane(Settings &settings) :
     connect(m_tabWidget, &QTabWidget::currentChanged, this, &SerialOutputPane::tabChanged);
     connect(m_tabWidget, &TabWidget::contextMenuRequested,
             this, &SerialOutputPane::contextMenuRequested);
+
+    m_inputLine->setPlaceholderText(tr("Type text and hit Enter to send"));
+    layout->addWidget(m_inputLine);
+
+    connect(m_inputLine, &QLineEdit::returnPressed, this, &SerialOutputPane::sendInput);
+
 
     m_mainWidget->setLayout(layout);
 
@@ -573,6 +584,11 @@ void SerialOutputPane::enableButtons(const SerialControl *rc, bool isRunning)
 
 void SerialOutputPane::tabChanged(int i)
 {
+    if (m_prevTabIndex >= 0) {
+        m_serialControlTabs[m_prevTabIndex].inputText = m_inputLine->text();
+        m_serialControlTabs[m_prevTabIndex].inputCursorPosition = m_inputLine->cursorPosition();
+    }
+
     const int index = indexOf(m_tabWidget->widget(i));
     if (i != -1 && index != -1) {
         const auto* rc = m_serialControlTabs.at(index).serialControl;
@@ -587,11 +603,16 @@ void SerialOutputPane::tabChanged(int i)
         m_portsSelection->blockSignals(false);
         m_baudRateSelection->blockSignals(false);
 
+        m_inputLine->setText(m_serialControlTabs.at(index).inputText);
+        m_inputLine->setCursorPosition(m_serialControlTabs.at(index).inputCursorPosition);
+
         // Update buttons
         enableButtons(rc, rc->isRunning());
     } else {
         enableDefaultButtons();
     }
+
+    m_prevTabIndex = index;
 }
 
 
@@ -744,6 +765,18 @@ void SerialOutputPane::openNewTerminalControl()
 
     if (debug)
         qDebug() << "Created new terminal on" << rc->portName();
+}
+
+// Send lineedit input to serial port
+void SerialOutputPane::sendInput()
+{
+    SerialControl *current = currentSerialControl();
+    const int index = currentIndex();
+    if (current && current->isRunning() && index >= 0) {
+        if (debug) qDebug() << "Sending:" << m_inputLine->text().toLocal8Bit();
+
+        current->writeData(m_inputLine->text().toLocal8Bit() + m_serialControlTabs.at(index).lineEnd);
+    }
 }
 
 

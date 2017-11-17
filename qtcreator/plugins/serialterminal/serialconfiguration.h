@@ -52,6 +52,8 @@ public:
 
     void pulseDTR();
 
+    qint64 writeData(QByteArray const& data);
+
 signals:
     void appendMessageRequested(SerialControl *serialControl,
                                 const QString &msg, Utils::OutputFormat format);

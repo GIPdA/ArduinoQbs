@@ -18,6 +18,8 @@ QT_END_NAMESPACE
 
 namespace Core { class OutputWindow; }
 
+class ConsoleLineEdit;
+
 namespace SerialTerminal {
 namespace Internal {
 
@@ -78,6 +80,9 @@ private:
         // Is the run control stopping asynchronously, close the tab once it finishes
         bool asyncClosing = false;
         BehaviorOnOutput behaviorOnOutput = Flash;
+        int inputCursorPosition {0};
+        QString inputText;
+        QByteArray lineEnd;
     };
 
 
@@ -102,6 +107,7 @@ private:
     void disconnectControl();
     void resetControl();
     void openNewTerminalControl();
+    void sendInput();
 
     bool closeTab(int index, CloseTabMode cm = CloseTabWithPrompt);
     int indexOf(const SerialControl *rc) const;
@@ -116,9 +122,11 @@ private:
 
 
     QWidget* m_mainWidget {nullptr};
+    ConsoleLineEdit* m_inputLine {nullptr};
     TabWidget* m_tabWidget {nullptr};
     Settings m_settings;
     QVector<SerialControlTab> m_serialControlTabs;
+    int m_prevTabIndex {-1};
 
     SerialDeviceModel* m_devicesModel {nullptr};
 
