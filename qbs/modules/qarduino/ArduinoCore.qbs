@@ -15,22 +15,29 @@ ArduinoBase {
     corePath: {
         if (arduinoCore === "teensy3")
             return arduinoPath+"/hardware/teensy/avr/cores/teensy3"
-        if (arduinoCore === "avr")
+        if (arduinoCore === "arduino")
             return arduinoPath+"/hardware/arduino/avr/cores/arduino"
     }
 
     coreLibrariesPath: {
         if (arduinoCore === "teensy3")
             return arduinoPath+"/hardware/teensy/avr/libraries"
-        if (arduinoCore === "avr")
+        if (arduinoCore === "arduino")
             return arduinoPath+"/hardware/arduino/avr/libraries"
     }
     coreIncludePaths: {
         if (arduinoCore === "teensy3")
             return [corePath+"/util"/*, corePath+"/avr"*/]
-        if (arduinoCore === "avr")
+        if (arduinoCore === "arduino")
             return []
     }
+
+    /*cpp.architecture: {
+        if (arduinoCore === "teensy3")
+            return "armv4t"
+        if (arduinoCore === "arduino")
+            return "avr2"
+    }//*/
 
     Properties {
         condition: arduinoCore === "teensy3"
@@ -45,7 +52,7 @@ ArduinoBase {
         cpp.dynamicLibraries: ["m"]
 
         cpp.commonCompilerFlags: ["-mthumb", "-ffunction-sections","-fdata-sections","-nostdlib",
-             "-Wcast-align", "-fpack-struct=1" // Default packed struct
+             "-Wcast-align"//, "-fpack-struct=1" // Default packed struct
             ]
 
 
@@ -66,11 +73,11 @@ ArduinoBase {
     }
 
     Properties {
-        condition: arduinoCore === "avr"
+        condition: arduinoCore === "arduino"
 
         //TODO: check compiler and throw error if not compatible
 
-        cpp.architecture: "avr2" // TODO: not sure that's right, check (http://www.atmel.com/webdoc/avrlibcreferencemanual/using_tools_1using_avr_gcc_mach_opt.html)
+        //cpp.architecture: "avr2" // TODO: not sure that's right, check (http://www.atmel.com/webdoc/avrlibcreferencemanual/using_tools_1using_avr_gcc_mach_opt.html)
         cpp.cFlags: ["-fno-fat-lto-objects"]
         cpp.cxxFlags: ["-fpermissive","-fno-threadsafe-statics","-felide-constructors"]
         cpp.assemblerFlags: ["-x","assembler-with-cpp"]
