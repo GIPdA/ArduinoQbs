@@ -2,19 +2,46 @@ var File = require("qbs.File");
 var TextFile = require("qbs.TextFile");
 
 
+function findBoard(map, board)
+{
+    return map[board];
+}
+
+// Retreive arduino core system for this board
+// Name: <board>,<variant> (example: "pro,16MHzatmega328")
 function getCore(map, name)
 {
     var bv = name.split(",")
     return findBuildValue(map, "core", bv[0], bv[1])
 }
 
-function getBoard(name) {
+// Retreive board name
+// Name: <board>,<variant> (example: "pro,16MHzatmega328")
+function getBoardName(name) {
     return name.split(",")[0]
 }
-function getBoardVariant(name) {
+// Retreive board variant
+// Name: <board>,<variant> (example: "pro,16MHzatmega328")
+function getBoardVariantName(name) {
     return name.split(",")[1]
 }
 
+
+// Recursively loop map to add sub-dicts and values (remove .value keys)
+function addBuildMapEntry(bmap, map)
+{
+    for (var bv in map) {
+        if (typeof map[bv].value !== "undefined") {
+            bmap[bv] = map[bv].value
+        } else {
+            bmap[bv] = {}
+            addBuildMapEntry(bmap[bv], map[bv])
+        }
+    }
+}
+
+// Construct an object of all "build" items of specified board+cpu
+// Name: <board>,<variant> (example: "pro,16MHzatmega328")
 function getBuildMap(map, name)
 {
     var bmap = {}
@@ -22,22 +49,12 @@ function getBuildMap(map, name)
 
     var boardBuildObj = boardBuildObject(map, bname[0])
     if (boardBuildObj) {
-        for (var bv in boardBuildObj) {
-            if (typeof boardBuildObj[bv].value !== "undefined")
-                bmap[bv] = boardBuildObj[bv].value
-            else
-                bmap[bv] = boardBuildObj[bv]
-        }
+        addBuildMapEntry(bmap, boardBuildObj)
     }
 
     var variantBuildObj = boardVariantBuildObject(map, bname[1])
     if (variantBuildObj) {
-        for (var bv in variantBuildObj) {
-            if (typeof variantBuildObj[bv].value !== "undefined")
-                bmap[bv] = variantBuildObj[bv].value
-            else
-                bmap[bv] = variantBuildObj[bv]
-        }
+        addBuildMapEntry(bmap, variantBuildObj)
     }
 
     //console.warn("Build map: " + bmap["core"])
@@ -47,6 +64,8 @@ function getBuildMap(map, name)
 
 
 
+// Returns the object of the "build" key of the specified board variant, if any.
+// Path: <bmap>.menu.cpu.<variant>.build
 function boardVariantBuildObject(bmap, variant)
 {
     if (typeof bmap.menu === "undefined") return
@@ -57,6 +76,7 @@ function boardVariantBuildObject(bmap, variant)
     return varmap.build
 }
 
+// Search the build value for the key in board variant
 function findVariantBuildValue(bmap, key, variant)
 {
     if (typeof bmap.menu === "undefined") return
@@ -75,6 +95,8 @@ function findVariantBuildValue(bmap, key, variant)
 }
 
 
+// Returns the object of the "build" key of the specified board, if any.
+// Path: <board>.build
 function boardBuildObject(map, board)
 {
     var boardmap = findBoard(map, board)
@@ -82,12 +104,10 @@ function boardBuildObject(map, board)
     return boardmap.build
 }
 
+// Search the build value for the key in board or board variant
 function findBuildValue(map, key, board, variant)
 {
-    var boardmap = findBoard(map, board)
-
-    if (typeof boardmap === "undefined") return
-    var buildmap = boardmap.build
+    var buildmap = boardBuildObject(map, board)
     if (typeof buildmap === "undefined") return
 
     var boardValue
@@ -105,16 +125,13 @@ function findBuildValue(map, key, board, variant)
     return boardValue
 }
 
-function findBoard(map, board)
-{
-    return map[board];
-}
 
-
+// Add key[.subkey]-value pair entry to the map
 function addEntry(map, entries, index, value)
 {
     var key = entries[index]
     if (index === entries.length) {
+        // Need to add a .value item because it can be both a string or a dict
         map.value = value
         return
     }
@@ -127,15 +144,15 @@ function addEntry(map, entries, index, value)
     addEntry(map[key], entries, index+1, value)
 }
 
+
+// Load a board file into map
 function loadBoardFile(map, fileName)
 {
     var tpl = TextFile(fileName, TextFile.ReadOnly)
-    //var tplStr = tpl.readAll()
 
     if (typeof map === "undefined")
         map = {}
 
-    //var map = {}
     while (!tpl.atEof()) {
         var str = tpl.readLine()
 
@@ -149,19 +166,18 @@ function loadBoardFile(map, fileName)
         var entries = leftStr.split('.')
         if (entries.length <= 1) continue // Bad entry?
 
-        if (entries[0] === "menu") continue
+        if (entries[0] === "menu") continue // Ignore root menu items
 
         //console.warn("LINE: " + leftStr + " = " + str.substring(n+1))
         //console.warn("ENTRIES: " + entries)
 
         addEntry(map, entries, 0, str.substring(n+1))
-
-        //console.warn("Name: " + map["yun"]["name"]["value"])
     }
 
     //console.warn("Name: " + map["yun"]["name"]["value"])
 
     //console.warn("Name: " + map["pro"]["menu"]["cpu"]["16MHzatmega328"]["build"]["mcu"]["value"])
+    //console.warn("Name: " + map.pro.menu.cpu.16MHzatmega328.build.mcu.value)
 
     //testMap(map)
 
