@@ -14,8 +14,8 @@ Module {
     property string arduinoCore
     PropertyOptions {
         name: "arduinoCore"
-        allowedValues: ["teensy3", "avr"]
-        description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'avr' for AVR boards)."
+        allowedValues: ["teensy3", "arduino"]
+        description: "Target architecture to compile for ('teensy3' for Teensy 3.x or 'arduino' for AVR boards)."
     }
 
     property string boardName
@@ -31,7 +31,7 @@ Module {
     property string time_zone
     property string time_dst
 
-    property string fcpu: frequency+"000000L"
+    property string fcpu: frequency
 
     cpp.positionIndependentCode: false
     cpp.enableExceptions: false

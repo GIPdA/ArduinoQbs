@@ -1,11 +1,19 @@
 import qbs
 import "boardscanner.js" as BoardScanner
+import "utils.js" as UT
 
 ArduinoCore {
+    id: root
     condition: true
     Depends { name: "cpp" }
 
+    property bool loaded: {
+        UT.setRootId(root) // utils.js needs access to some module properties
+        return true
+    }
 
+
+    // Scans Arduino's board.txt files
     Probe {
         id: boardScannerProbe
         condition: true
@@ -13,46 +21,48 @@ ArduinoCore {
         property var boardsMap: {}
 
         configure: {
-            boardsMap = BoardScanner.loadBoardFile(boardsMap, "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/boards.txt")
-            boardsMap = BoardScanner.loadBoardFile(boardsMap, "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/boards.txt")
+            boardsMap = BoardScanner.loadBoardFile(boardsMap, arduinoPath+"/hardware/arduino/avr/boards.txt")
+            boardsMap = BoardScanner.loadBoardFile(boardsMap, arduinoPath+"/hardware/teensy/avr/boards.txt")
+            // TODO: allow user to load custom board files (or/and add directly a board dict?)
 
             //console.warn("Name: " + boardsMap["nano"]["name"]["value"])
 
-            console.warn("Core: " + BoardScanner.getCore(boardsMap, boardName))
+            //console.warn("Core: " + BoardScanner.getCore(boardsMap, boardName))
         }
     }
 
+    // Build dict for the current board
     property var boardBuild: BoardScanner.getBuildMap(boardScannerProbe.boardsMap, boardName)
 
     arduinoCore: boardBuild.core
     cpu: boardBuild.mcu
-    frequency: boardBuild.f_cpu
+    frequency: boardBuild.f_cpu ? boardBuild.f_cpu : "48000000L" // Default FCPU for teensy
 
 
     Properties {
-        condition: arduinoCore === "teensy3"
+        condition: arduinoCore === "teensy3" && loaded
 
-        property stringList flags_cpu: boardBuild.flags.cpu.split(" ")
+        property stringList flags_cpu: UT.flags(boardBuild.flags.cpu)
         property stringList flags_defines: [boardBuild.board]
 
-        property stringList flags_ldspecs: boardBuild.flags.ld.split(" ")
-        property stringList flags_libs: boardBuild.flags.libs.split(" ")
+        property stringList flags_ldspecs: UT.flags(boardBuild.flags.ld)
+        property stringList flags_libs: UT.flags(boardBuild.flags.libs, true)
 
-        cpp.architecture: "armv4t"
+        //cpp.architecture: "armv4t"
 
-        cpp.commonCompilerFlags: base.concat(flags_cpu, boardBuild.flags.common.split(" "))
+        cpp.commonCompilerFlags: base.concat(flags_cpu, UT.flags(boardBuild.flags.common))
 
-        cpp.cxxFlags: base.concat(boardBuild.flags.cpp.split(" "))
-        cpp.cFlags: base.concat(boardBuild.flags.c.split(" "))
-        cpp.assemblerFlags: base.concat(boardBuild.flags.S.split(" "))
+        cpp.cxxFlags: base.concat(UT.flags(boardBuild.flags.dep), UT.flags(boardBuild.flags.cpp))
+        //cpp.cFlags: base.concat(UT.flags(boardBuild.flags.c))
+        cpp.assemblerFlags: base.concat(UT.flags(boardBuild.flags.S))
 
         cpp.dynamicLibraries: base.concat(flags_libs)
-        cpp.driverFlags: base.concat(flags_cpu, flags_ldspecs, boardBuild.flags.defs.split(" "))
-        cpp.defines: base.concat(flags_defines)
+        cpp.driverFlags: base.concat(flags_cpu, flags_ldspecs)
+        cpp.defines: base.concat(flags_defines, UT.flags(boardBuild.flags.defs, true))
     }
 
     Properties {
-        condition: arduinoCore === "arduino"
+        condition: arduinoCore === "arduino" && loaded
         //cpp.architecture: "avr5"
 
         property stringList flags_cpu: ["-mmcu="+boardBuild.mcu]
@@ -71,14 +81,6 @@ ArduinoCore {
     }
 
 
-    /*cpu: { // FIXME: Workaround for bug QBS-1240, remove comments when fixed
-        if (boardName === "teensy30") return "mk20dx128"
-        if (boardName === "teensy31" || boardName === "teensy32") return "mk20dx256"
-        if (boardName === "teensy35") return "mk64fx512"
-        if (boardName === "teensy36") return "mk66fx1m0"
-        if (boardName === "pro5Vatmega328p") return "atmega328p"
-        if (boardName === "pro3V3atmega328p") return "atmega328p"
-    }//*/
 
     /*Properties {
         condition: boardName === "teensy30"

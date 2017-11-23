@@ -6,7 +6,7 @@ ArduinoApplication
     // Don't forget to change the compiler accordingly if you change board architecture (i.e. avr/teensy) !
 
     board: "teensy36"    // Board Ref: 30, 31, 35, 36, LC
-    //frequency: "96" // CPU Frequency in MHz
+    frequencyMHz: "96" // CPU Frequency in MHz
 
     //board: "pro,16MHzatmega328"
 

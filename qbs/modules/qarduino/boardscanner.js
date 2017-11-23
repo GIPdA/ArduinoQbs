@@ -1,3 +1,5 @@
+// Scans Arduino's board files for build settings
+
 var File = require("qbs.File");
 var TextFile = require("qbs.TextFile");
 
@@ -89,7 +91,7 @@ function findVariantBuildValue(bmap, key, variant)
     var build = boardVariantBuildObject(bmap, variant)
     if (typeof build === "undefined") return
 
-    console.warn("Found variant build key: " + key + " = " + build[key].value)
+    //console.warn("Found variant build key: " + key + " = " + build[key].value)
 
     return build[key].value
 }
@@ -105,6 +107,7 @@ function boardBuildObject(map, board)
 }
 
 // Search the build value for the key in board or board variant
+// Return board variant first if found
 function findBuildValue(map, key, board, variant)
 {
     var buildmap = boardBuildObject(map, board)
@@ -112,16 +115,16 @@ function findBuildValue(map, key, board, variant)
 
     var boardValue
     if (typeof buildmap[key] !== "undefined") {
-        console.warn("Found build key: " + key + " = " + buildmap[key].value)
+        //console.warn("Found build key: " + key + " = " + buildmap[key].value)
         boardValue = buildmap[key].value
     }
 
-    if (!variant) return boardValue
+    if (variant) {
+        // Search in variant boards
+        var varValue = findVariantBuildValue(boardmap, key, variant)
+        if (typeof varValue !== "undefined") return varValue
+    }
 
-    // Search in variant boards
-    var varValue = findVariantBuildValue(boardmap, key, variant)
-
-    if (typeof varValue !== "undefined") return varValue
     return boardValue
 }
 

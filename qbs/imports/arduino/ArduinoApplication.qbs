@@ -65,7 +65,8 @@ CppApplication {
     //*/
     // CPU clock in MHz
     property string frequency
-    qarduino.frequency: frequency ? frequency : original
+    property string frequencyMHz
+    qarduino.frequency: frequency ? frequency : (frequencyMHz ? frequencyMHz+"000000L" : original)
 
 
     /* #### USB (Teensy) ####
