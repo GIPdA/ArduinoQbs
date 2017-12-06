@@ -54,7 +54,7 @@ function getBuildMap(map, name)
         addBuildMapEntry(bmap, boardBuildObj)
     }
 
-    var variantBuildObj = boardVariantBuildObject(map, bname[1])
+    var variantBuildObj = boardVariantBuildObject(map[bname[0]], bname[1])
     if (variantBuildObj) {
         addBuildMapEntry(bmap, variantBuildObj)
     }
