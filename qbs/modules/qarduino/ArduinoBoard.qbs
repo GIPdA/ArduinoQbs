@@ -20,6 +20,8 @@ ArduinoCore {
 
         property var boardsMap: {}
 
+        property path arduinoPath: root.arduinoPath
+
         configure: {
             boardsMap = BoardScanner.loadBoardFile(boardsMap, arduinoPath+"/hardware/arduino/avr/boards.txt")
             boardsMap = BoardScanner.loadBoardFile(boardsMap, arduinoPath+"/hardware/teensy/avr/boards.txt")

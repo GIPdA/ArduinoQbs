@@ -374,6 +374,8 @@ CppApplication {
 
         property stringList coreLibrariesEntries: []
 
+        property string coreLibrariesPath: rootApp.coreLibrariesPath
+
         configure: {
             // Get core libs names
             var coreLibs = File.directoryEntries(coreLibrariesPath, File.AllDirs | File.NoDotAndDotDot)
