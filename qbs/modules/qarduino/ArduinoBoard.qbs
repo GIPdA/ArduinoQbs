@@ -8,7 +8,7 @@ ArduinoCore {
     Depends { name: "cpp" }
 
     property bool loaded: {
-        UT.setRootId(root) // utils.js needs access to some module properties
+        UT.setRootId(root) // utils.js needs access to some module properties. A bit hacky?
         return true
     }
 
