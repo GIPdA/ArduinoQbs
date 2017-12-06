@@ -59,7 +59,7 @@ ArduinoBase {
 
 
         //cpp.defines: ["ARDUINO=10802"]
-        cpp.defines: ["ARDUINO=10802", "TEENSYDUINO=141", usbType, "LAYOUT_"+keyLayout, "F_CPU="+fcpu]
+        cpp.defines: ["ARDUINO=10802", usbType, "LAYOUT_"+keyLayout, "F_CPU="+fcpu]
 
 
         // Relative paths
