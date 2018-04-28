@@ -5,10 +5,15 @@ ArduinoApplication
 {
     // Don't forget to change the compiler accordingly if you change board architecture (i.e. avr/teensy) !
 
-    board: "teensy36"    // Board Ref: 30, 31, 35, 36, LC
-    frequencyMHz: "96" // CPU Frequency in MHz
+    property bool testAvr: false // for debug purpose only, set to true to test AVR build
+
+    // Board selection: <board>,<cpu variant> from boards.txt (example: "pro,16MHzatmega328")
+
+    board: !testAvr ? "teensy31" : "nano,atmega328"    // Board Ref: 30, 31, 35, 36, LC (use 31 for 3.2 boards)
+    frequencyMHz: !testAvr ? "96" : "16" // CPU Frequency in MHz
 
     //board: "pro,16MHzatmega328"
+    //frequencyMHz: "16"
 
     serialport: "/dev/cu.usbmodem1411"
 
@@ -35,6 +40,7 @@ ArduinoApplication
     qbs.optimization: "small" // fast, none
 }
 
+// ! Upload from QtCreator doesn't work for now !
 
 /* #### Build Configuration Guide ####
  * /!\ Install root must be the same as build directory. /!\

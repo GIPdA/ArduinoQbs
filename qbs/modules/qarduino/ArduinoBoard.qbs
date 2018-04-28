@@ -21,6 +21,7 @@ ArduinoCore {
         property var boardsMap: {}
 
         property path arduinoPath: root.arduinoPath
+        //property path boardName: root.boardName
 
         configure: {
             boardsMap = BoardScanner.loadBoardFile(boardsMap, arduinoPath+"/hardware/arduino/avr/boards.txt")
@@ -28,8 +29,7 @@ ArduinoCore {
             // TODO: allow user to load custom board files (or/and add directly a board dict?)
 
             //console.warn("Name: " + boardsMap["nano"]["name"]["value"])
-
-            //console.warn("Core: " + BoardScanner.getCore(boardsMap, boardName))
+            //console.warn("Core detected: " + BoardScanner.getCore(boardsMap, boardName))
         }
     }
 

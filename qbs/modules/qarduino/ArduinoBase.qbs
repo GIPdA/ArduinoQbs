@@ -36,6 +36,6 @@ Module {
     cpp.positionIndependentCode: false
     cpp.enableExceptions: false
     cpp.enableRtti: false
-    cpp.cxxLanguageVersion: "gnu++0x"
+    //cpp.cxxLanguageVersion: "gnu++0x"
     //cpp.cxxLanguageVersion: "c++11"
 }
